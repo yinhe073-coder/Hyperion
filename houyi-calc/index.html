@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>后羿攻速阈值计算器</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1f2328; --mute:#6b7280; --ok:#1a7f37; --bad:#cf222e; --warn:#9a6700; --line:#e5e7eb; --acc:#2563eb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --card:#181b21; --ink:#e6e6e6; --mute:#9aa0a6; --line:#2a2f37; --ok:#3fb950; --bad:#f85149; --warn:#d29922; --acc:#58a6ff; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:1100px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:4px 0; } h2 { font-size:16px; margin:0 0 8px; }
+  .sub { color:var(--mute); font-size:12px; }
+  .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  label { display:flex; justify-content:space-between; gap:8px; align-items:center; margin:4px 0; }
+  input[type=number] { width:72px; } input[type=text] { width:100%; }
+  input, select, button { font:inherit; color:inherit; background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:3px 6px; }
+  button { cursor:pointer; background:var(--acc); color:#fff; border:none; padding:6px 12px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { border-bottom:1px solid var(--line); padding:4px 6px; text-align:left; white-space:nowrap; }
+  td input[type=number] { width:64px; }
+  .big { font-size:28px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+  .conf-low { color:var(--bad); } .conf-medium { color:var(--warn); } .conf-high { color:var(--ok); }
+  .bar { position:relative; height:14px; background:var(--line); border-radius:7px; overflow:hidden; margin:6px 0; }
+  .bar > div { height:100%; background:var(--acc); }
+  .bar > span { position:absolute; top:0; bottom:0; width:2px; background:var(--bad); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .scroll { overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>后羿攻速阈值计算器</h1>
+  <div class="sub" id="ver"></div>
+  <p class="sub">用法：选好 6 件装备和 30 颗铭文，看攻速有没有卡到档位、溢出多少。点「自动配铭文」会枚举所有铭文组合，挑出卡住阈值、同时暴击收益最高的方案。
+    所有数值都可以改，标红的是可信度低的数字，请进训练营核对后修正。</p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>英雄参数</h2>
+      <label>等级 <input type="number" id="level" min="1" max="15"></label>
+      <label>每级攻速成长 % <input type="number" id="growth" step="0.1"></label>
+      <label>被动每层攻速 % <span class="conf-low">（待核对）</span><input type="number" id="pper" step="0.1"></label>
+      <label>被动层数（0~3） <input type="number" id="pstacks" min="0" max="3"></label>
+      <label style="display:block">攻速档位（逗号分隔，最后一个视为上限）
+        <input type="text" id="thr"></label>
+      <div class="sub">目前只有最高档 153.2% 有来源。中间档位可从 B 站实测表粘贴进来。</div>
+    </section>
+
+    <section class="card">
+      <h2>出装（6 格）</h2>
+      <div id="slots"></div>
+    </section>
+
+    <section class="card">
+      <h2>铭文（每色 10 颗）</h2>
+      <div id="ins"></div>
+      <div class="row" style="margin-top:8px">
+        <button id="solve">自动配铭文</button>
+        <label style="margin:0">夺萃至少 <input type="number" id="minls" value="0" min="0" max="10"> 颗</label>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px">
+    <h2>结果</h2>
+    <div class="row" style="align-items:baseline; gap:24px">
+      <div><div class="sub">战斗中攻速</div><div class="big" id="as"></div></div>
+      <div><div class="sub">档位状态</div><div class="big" id="state" style="font-size:18px"></div></div>
+      <div><div class="sub">暴击率 / 暴击伤害</div><div class="big" id="crit" style="font-size:18px"></div></div>
+      <div><div class="sub">物攻 / 吸血 / 总价</div><div class="big" id="misc" style="font-size:18px"></div></div>
+    </div>
+    <div class="bar"><div id="fill"></div><span id="cap"></span></div>
+    <div class="sub" id="breakdown"></div>
+    <div class="sub" id="warn"></div>
+    <h2 style="margin-top:12px">逐件成型（当前铭文、当前等级、当前被动层数）</h2>
+    <div id="steps" class="sub"></div>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <h2>自动配铭文结果（前 10）</h2>
+    <div class="scroll"><table id="solveTbl"><tbody><tr><td class="sub">点「自动配铭文」</td></tr></tbody></table></div>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <h2>装备数值表（可修改）</h2>
+    <div class="scroll"><table id="itemTbl"></table></div>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <h2>数据来源</h2>
+    <ul id="src" class="sub"></ul>
+  </section>
+</main>
+
+<script src="data.js"></script>
+<script src="calc.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const D = DATA;
+const H = D.hero;
+const itemNames = Object.keys(D.items);
+const defaultBuild = ["急速战靴", "闪电匕首", "无尽战刃", "破晓", "泣血之刃", "名刀·司命"];
+const defaultIns = { "鹰眼": 10, "红月": 3, "无双": 7, "狩猎": 10 };
+const confTxt = { high: "高", medium: "中", low: "低" };
+
+$("ver").textContent = "数据版本：" + D.version;
+$("level").value = H.level; $("growth").value = H.growthPerLevel;
+$("pper").value = H.passivePerStack; $("pstacks").value = H.passiveStacks;
+$("thr").value = H.thresholds.join(",");
+
+// 出装下拉框
+for (let i = 0; i < 6; i++) {
+  const sel = document.createElement("select");
+  sel.innerHTML = '<option value="">（空）</option>' + itemNames.map(n => `<option>${n}</option>`).join("");
+  sel.value = defaultBuild[i] || "";
+  sel.className = "slot"; sel.style.width = "100%"; sel.style.margin = "2px 0";
+  sel.onchange = render;
+  $("slots").appendChild(sel);
+}
+
+// 铭文输入
+const insBox = $("ins");
+for (const [color, group] of Object.entries(D.inscriptions)) {
+  const div = document.createElement("div");
+  div.innerHTML = `<div class="sub">${{ red: "红色", blue: "蓝色", green: "绿色" }[color]}</div>` +
+    Object.keys(group).map(n => {
+      const st = Object.entries(group[n]).filter(([k]) => k !== "conf").map(([k, v]) => statName(k) + "+" + v).join(" ");
+      return `<label>${n} <span class="sub">${st}</span><input type="number" class="ins" data-n="${n}" data-c="${color}" min="0" max="10" value="${defaultIns[n] || 0}"></label>`;
+    }).join("");
+  insBox.appendChild(div);
+}
+insBox.addEventListener("input", render);
+for (const id of ["level", "growth", "pper", "pstacks", "thr"]) $(id).addEventListener("input", render);
+
+function statName(k) {
+  return { as: "攻速%", atk: "物攻", crit: "暴击%", critDmg: "暴伤%", ls: "吸血%", ms: "移速%", pen: "穿透%", penFlat: "物穿" }[k] || k;
+}
+
+// 装备数值表
+const cols = ["price", "as", "atk", "crit", "critDmg", "ls", "pen"];
+function drawItemTable() {
+  $("itemTbl").innerHTML = "<tr><th>装备</th>" + cols.map(c => `<th>${c === "price" ? "价格" : statName(c)}</th>`).join("") +
+    "<th>可信度</th><th>合成小件</th><th>备注</th></tr>" +
+    itemNames.map(n => {
+      const it = D.items[n];
+      return `<tr><td>${n}</td>` + cols.map(c => `<td><input type="number" data-i="${n}" data-k="${c}" value="${it[c] || 0}"></td>`).join("") +
+        `<td class="conf-${it.conf}">${confTxt[it.conf]}</td><td>${it.recipe.join(" + ")}</td><td class="sub">${it.note || ""}</td></tr>`;
+    }).join("");
+}
+drawItemTable();
+$("itemTbl").addEventListener("input", (e) => {
+  const t = e.target; if (!t.dataset.i) return;
+  D.items[t.dataset.i][t.dataset.k] = parseFloat(t.value) || 0;
+  render();
+});
+
+$("src").innerHTML = D.sources.map(([t, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join("");
+
+function readHero() {
+  H.growthPerLevel = parseFloat($("growth").value) || 0;
+  H.passivePerStack = parseFloat($("pper").value) || 0;
+  const thr = $("thr").value.split(/[,，\s]+/).map(parseFloat).filter(x => !isNaN(x));
+  H.thresholds = thr.length ? thr : [H.maxThreshold];
+  return { level: parseInt($("level").value) || 15, passiveStacks: parseInt($("pstacks").value) || 0 };
+}
+function readBuild() {
+  const items = [...document.querySelectorAll(".slot")].map(s => s.value).filter(Boolean);
+  const ins = {};
+  document.querySelectorAll(".ins").forEach(el => { const v = parseInt(el.value) || 0; if (v) ins[el.dataset.n] = v; });
+  return { items, ins };
+}
+
+function render() {
+  const hp = readHero();
+  const b = readBuild();
+  const s = sumStats(D, { ...b, ...hp });
+  const t = tierOf(s.as, H.thresholds);
+  const max = Math.max(...H.thresholds);
+  $("as").textContent = s.as.toFixed(1) + "%";
+  $("as").className = "big " + (t.capped ? "ok" : "");
+  $("state").innerHTML = t.capped
+    ? `<span class="ok">已卡满 ${max}%</span>${t.overflow ? ` <span class="warn">溢出 ${t.overflow}%</span>` : ""}`
+    : `档位 ${t.tier}%，浪费 <span class="warn">${t.waste}%</span>，下一档 ${t.next}% 还差 <span class="bad">${t.gap}%</span>`;
+  $("crit").textContent = `${s.critCapped.toFixed(1)}% / ${s.critDmgTotal.toFixed(1)}%`;
+  $("misc").textContent = `${s.atk.toFixed(0)} / ${s.ls}% / ${s.price}`;
+  $("fill").style.width = Math.min(100, s.as / (max * 1.15) * 100) + "%";
+  $("cap").style.left = (100 / 1.15) + "%";
+  const insAs = s.as - s.asGrowth - s.asPassive - itemAs(b.items);
+  $("breakdown").textContent = `= 装备 ${itemAs(b.items)}% + 铭文 ${insAs.toFixed(1)}% + 等级成长 ${s.asGrowth}% + 被动 ${s.asPassive}%`;
+
+  // 铭文数量校验
+  const cnt = { red: 0, blue: 0, green: 0 };
+  document.querySelectorAll(".ins").forEach(el => cnt[el.dataset.c] += parseInt(el.value) || 0);
+  const bad = Object.entries(cnt).filter(([, v]) => v !== 10).map(([k, v]) => ({ red: "红", blue: "蓝", green: "绿" }[k] + "色 " + v + " 颗"));
+  $("warn").innerHTML = bad.length ? `<span class="bad">铭文数量不对：${bad.join("，")}（每色应为 10 颗）</span>` : "";
+
+  $("steps").innerHTML = b.items.map((_, i) => {
+    const si = sumStats(D, { items: b.items.slice(0, i + 1), ins: b.ins, ...hp });
+    const ti = tierOf(si.as, H.thresholds);
+    return `${i + 1}件（${b.items[i]}）<b class="${ti.capped ? "ok" : ""}">${si.as.toFixed(1)}%</b>`;
+  }).join(" → ");
+}
+function itemAs(items) { return items.reduce((a, n) => a + (D.items[n].as || 0), 0); }
+
+$("solve").onclick = () => {
+  const hp = readHero();
+  const { items } = readBuild();
+  const save = { level: H.level, stacks: H.passiveStacks };
+  H.level = hp.level; H.passiveStacks = hp.passiveStacks;
+  const res = solveInscriptions(D, items, { minLifesteal: parseInt($("minls").value) || 0 }).slice(0, 10);
+  H.level = save.level; H.passiveStacks = save.stacks;
+  $("solveTbl").innerHTML = "<tr><th></th><th>铭文</th><th>攻速</th><th>状态</th><th>暴击</th><th>暴伤</th><th>物攻</th><th>吸血</th></tr>" +
+    res.map((r, i) => {
+      const t = tierOf(r.s.as, H.thresholds);
+      return `<tr><td><button data-k="${i}">套用</button></td><td>${fmtIns(r.ins)}</td><td>${r.s.as.toFixed(1)}%</td>
+        <td>${r.reached ? `<span class="ok">卡满</span>${t.overflow ? ` 溢出${t.overflow}` : ""}` : `<span class="bad">差 ${t.gap}</span>`}</td>
+        <td>${r.s.critCapped.toFixed(1)}%</td><td>${r.s.critDmgTotal}%</td><td>${r.s.atk.toFixed(0)}</td><td>${r.s.ls}%</td></tr>`;
+    }).join("");
+  $("solveTbl").querySelectorAll("button").forEach(btn => btn.onclick = () => {
+    const ins = res[+btn.dataset.k].ins;
+    document.querySelectorAll(".ins").forEach(el => el.value = ins[el.dataset.n] || 0);
+    render();
+  });
+};
+
+render();
+</script>
+</body>
+</html>
