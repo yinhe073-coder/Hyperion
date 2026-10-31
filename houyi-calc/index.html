@@ -60,7 +60,7 @@
       <div id="ins"></div>
       <div class="row" style="margin-top:8px">
         <button id="solve">自动配铭文</button>
-        <label style="margin:0">夺萃至少 <input type="number" id="minls" value="0" min="0" max="10"> 颗</label>
+        <label style="margin:0">夺萃至少 <input type="number" id="minls" value="3" min="0" max="10"> 颗</label>
       </div>
     </section>
   </div>
@@ -83,6 +83,16 @@
   <section class="card" style="margin-top:12px">
     <h2>自动配铭文结果（前 10）</h2>
     <div class="scroll"><table id="solveTbl"><tbody><tr><td class="sub">点「自动配铭文」</td></tr></tbody></table></div>
+  </section>
+
+  <section class="card" style="margin-top:12px">
+    <h2>全局优化（每秒伤害模型）</h2>
+    <p class="sub">对上面选中的 6 件装备，枚举所有出装顺序（鞋固定第 1 件、保命装固定最后）× 所有铭文组合。
+      按经济（每分钟 <input type="number" id="gpm" style="width:64px"> 金币）推算每个时刻买了哪些装备、多少级，
+      对脆皮和坦克、被动强弱两种情况取平均，统计第 <input type="number" id="t0" style="width:48px"> ～ <input type="number" id="t1" style="width:48px"> 分钟的加权平均每秒伤害。
+      得分以「当前出装 + 当前铭文」为 100。夺萃至少用上面填的颗数（填 0 就不限制）。大约需要 5～10 秒。</p>
+    <div class="row"><button id="opt">开始全局优化</button><span id="optMsg" class="sub"></span></div>
+    <div class="scroll"><table id="optTbl"></table></div>
   </section>
 
   <section class="card" style="margin-top:12px">
@@ -225,6 +235,31 @@ $("solve").onclick = () => {
     document.querySelectorAll(".ins").forEach(el => el.value = ins[el.dataset.n] || 0);
     render();
   });
+};
+
+$("gpm").value = D.model.goldPerMin; $("t0").value = D.model.timeRange[0]; $("t1").value = D.model.timeRange[1];
+$("opt").onclick = () => {
+  readHero();
+  D.model.goldPerMin = parseFloat($("gpm").value) || 650;
+  D.model.timeRange = [parseFloat($("t0").value) || 3, parseFloat($("t1").value) || 20];
+  const { items, ins } = readBuild();
+  if (items.length < 2) { $("optMsg").textContent = "至少选 2 件装备"; return; }
+  $("optMsg").textContent = "计算中…";
+  setTimeout(() => {
+    const t = performance.now();
+    const base = scoreBuild(D, items, ins).score;
+    const res = optimize(D, items, { minLifesteal: parseInt($("minls").value) || 0 }).slice(0, 15);
+    $("optMsg").textContent = `完成，用时 ${((performance.now() - t) / 1000).toFixed(1)} 秒`;
+    $("optTbl").innerHTML = "<tr><th></th><th>得分</th><th>出装顺序</th><th>铭文</th><th>成型时间（分钟）</th></tr>" +
+      res.map((r, i) => `<tr><td><button data-k="${i}">套用</button></td><td>${(r.score / base * 100).toFixed(1)}</td>
+        <td>${r.order.join(" → ")}</td><td>${fmtIns(r.ins)}</td><td>${r.doneAt.join(" / ")}</td></tr>`).join("");
+    $("optTbl").querySelectorAll("button").forEach(btn => btn.onclick = () => {
+      const r = res[+btn.dataset.k];
+      document.querySelectorAll(".slot").forEach((el, i) => el.value = r.order[i] || "");
+      document.querySelectorAll(".ins").forEach(el => el.value = r.ins[el.dataset.n] || 0);
+      render();
+    });
+  }, 30);
 };
 
 render();
