@@ -306,6 +306,33 @@ function optimize(data, items, opts = {}) {
   return res;
 }
 
+// 选装优化：fixed 固定在前（如鞋），从 pool 里挑 k 件，枚举组合 × 顺序（用参考铭文粗筛），
+// 再对前 top 套做完整的「顺序 × 铭文」优化
+function combinations(arr, k) {
+  if (k === 0) return [[]];
+  if (arr.length < k) return [];
+  const [x, ...rest] = arr;
+  return combinations(rest, k - 1).map((c) => [x, ...c]).concat(combinations(rest, k));
+}
+function optimizeSet(data, fixed, pool, k, opts = {}) {
+  const ins = opts.refIns || data.defaultIns;
+  const def = data.model.defensive || [];
+  const coarse = [];
+  for (const combo of combinations(pool.filter((n) => !fixed.includes(n)), k)) {
+    const last = combo.filter((n) => def.includes(n));
+    const mid = combo.filter((n) => !last.includes(n));
+    let best = null;
+    for (const p of permutations(mid)) {
+      const order = [...fixed, ...p, ...last];
+      const r = scoreBuild(data, order, ins, opts.model || {});
+      if (!best || r.score > best.score) best = { order, score: r.score };
+    }
+    coarse.push(best);
+  }
+  coarse.sort((a, b) => b.score - a.score);
+  return coarse.slice(0, opts.top || 5).map((c) => optimize(data, c.order, opts)[0]).sort((a, b) => b.score - a.score);
+}
+
 function fmtIns(ins) {
   return Object.entries(ins).map(([k, v]) => v + k).join(" + ");
 }
@@ -319,5 +346,5 @@ function setPath(o, p, v) {
 
 if (typeof module !== "undefined") module.exports = {
   sumStats, derive, tierOf, solveInscriptions, fmtIns, insCandidates, effectiveAS, hitDamage, dps,
-  summoner, evaluate, rawStats, scoreBuild, scoreFromStats, optimize, levelAt, getPath, setPath,
+  summoner, evaluate, rawStats, scoreBuild, scoreFromStats, optimize, optimizeSet, combinations, levelAt, getPath, setPath,
 };
