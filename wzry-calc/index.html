@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>王者荣耀出装计算器</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1f2328; --mute:#6b7280; --ok:#1a7f37; --bad:#cf222e; --warn:#9a6700; --line:#e5e7eb; --acc:#2563eb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --card:#181b21; --ink:#e6e6e6; --mute:#9aa0a6; --line:#2a2f37; --ok:#3fb950; --bad:#f85149; --warn:#d29922; --acc:#58a6ff; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:1100px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:4px 0; } h2 { font-size:16px; margin:0 0 8px; }
+  .sub { color:var(--mute); font-size:12px; }
+  .grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .mt { margin-top:12px; }
+  label { display:flex; justify-content:space-between; gap:8px; align-items:center; margin:4px 0; }
+  input[type=number] { width:72px; } input[type=text] { width:100%; }
+  input, select, button { font:inherit; color:inherit; background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:3px 6px; }
+  button { cursor:pointer; background:var(--acc); color:#fff; border:none; padding:6px 12px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { border-bottom:1px solid var(--line); padding:4px 6px; text-align:left; white-space:nowrap; }
+  td input[type=number] { width:64px; }
+  .big { font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .mid { font-size:17px; font-weight:700; }
+  .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+  .conf-low { color:var(--bad); } .conf-medium { color:var(--warn); } .conf-high { color:var(--ok); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .stats { display:flex; gap:24px; flex-wrap:wrap; align-items:baseline; }
+  .scroll { overflow-x:auto; }
+  .hero-pick { font-size:16px; padding:4px 10px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="row" style="justify-content:space-between">
+    <h1>王者荣耀出装计算器</h1>
+    <label style="margin:0">英雄 <select id="hero" class="hero-pick"></select></label>
+  </div>
+  <div class="sub" id="ver"></div>
+  <p class="sub" id="intro"></p>
+
+  <div class="grid">
+    <section class="card"><h2>英雄与模型参数</h2><div id="params"></div>
+      <label style="display:block">攻速档位（逗号分隔，最后一个视为上限）<input type="text" id="thr"></label>
+    </section>
+    <section class="card"><h2>出装（6 格）</h2><div id="slots"></div></section>
+    <section class="card"><h2>铭文（每色 10 颗）</h2><div id="ins"></div>
+      <div class="row" style="margin-top:8px" id="solveRow">
+        <button id="solve">自动配铭文（卡攻速阈值）</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="card mt"><h2>结果</h2>
+    <div class="stats" id="result"></div>
+    <div class="sub" id="breakdown"></div>
+    <div class="sub" id="warn"></div>
+    <h2 class="mt">逐件成型</h2><div id="steps" class="sub"></div>
+  </section>
+
+  <section class="card mt" id="solveCard"><h2>自动配铭文结果（前 10）</h2>
+    <div class="scroll"><table id="solveTbl"><tbody><tr><td class="sub">点「自动配铭文」</td></tr></tbody></table></div>
+  </section>
+
+  <section class="card mt"><h2>全局优化</h2>
+    <p class="sub" id="optIntro"></p>
+    <div class="row">
+      <label style="margin:0">每分钟经济 <input type="number" id="gpm"></label>
+      <label style="margin:0">统计第 <input type="number" id="t0" style="width:48px"> ～ <input type="number" id="t1" style="width:48px"> 分钟</label>
+      <label style="margin:0">精度 <select id="step"><option value="2">快速（铭文每 2 颗）</option><option value="1">精细（较慢）</option></select></label>
+      <button id="opt">开始全局优化</button><span id="optMsg" class="sub"></span>
+    </div>
+    <div class="scroll"><table id="optTbl"></table></div>
+  </section>
+
+  <section class="card mt" id="measureCard"><h2>训练营测量清单</h2><ol id="measure" class="sub"></ol></section>
+
+  <section class="card mt"><h2>装备数值表（可修改）</h2><div class="scroll"><table id="itemTbl"></table></div></section>
+
+  <section class="card mt"><h2>数据来源</h2><ul id="src" class="sub"></ul></section>
+</main>
+
+<script src="heroes/houyi.js"></script>
+<script src="heroes/milady.js"></script>
+<script src="calc.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const confTxt = { high: "高", medium: "中", low: "低" };
+const colorName = { red: "红色", blue: "蓝色", green: "绿色" };
+const statLabel = { as: "攻速%", atk: "物攻", crit: "暴击%", critDmg: "暴伤%", ls: "吸血%", ms: "移速%", pen: "穿透%", penFlat: "物穿",
+  ap: "法攻", apPct: "法攻加成%", cdr: "冷却%", allyAs: "友方攻速%", msFlat: "固定移速", apOnHit: "普攻法强系数", price: "价格" };
+const stat = (k) => statLabel[k] || k;
+let D;
+
+for (const [id, h] of Object.entries(HEROES)) $("hero").insertAdjacentHTML("beforeend", `<option value="${id}">${h.hero.name}</option>`);
+$("hero").onchange = () => load($("hero").value);
+
+function load(id) {
+  D = HEROES[id];
+  const H = D.hero, M = D.model, isAdc = M.type === "adc";
+  $("ver").textContent = "数据版本：" + D.version;
+  $("intro").textContent = isAdc
+    ? "普攻射手模型：选好出装和铭文，看攻速有没有卡到档位；「自动配铭文」挑出卡住阈值、暴击收益最高的铭文；「全局优化」按每秒伤害排出最优出装顺序和铭文。标红的数字可信度低，请进训练营核对。"
+    : "召唤物拆塔模型：机器人吃法术攻击和友方攻速光环，冷却决定场上机器人数量和二技能覆盖率。得分 = 拆塔每秒伤害 × 移速加成权重。米莱狄很多数字是占位估计，请先按下方「训练营测量清单」实测。";
+
+  // 参数
+  const rows = [...D.heroParams.map(([k, n, c]) => ["hero." + k, n, c]), ...(D.modelParams || []).map(([k, n, c]) => ["model." + k, n, c])];
+  $("params").innerHTML = rows.map(([k, n, c]) =>
+    `<label>${n} ${c === "low" ? '<span class="conf-low">（待核对）</span>' : ""}<input type="number" step="any" data-p="${k}" value="${Number(getPath(D, k))}"></label>`).join("");
+  $("params").oninput = (e) => {
+    const k = e.target.dataset.p; if (!k) return;
+    setPath(D, k, parseFloat(e.target.value) || 0); render();
+  };
+  $("thr").value = H.thresholds.join(",");
+
+  // 出装
+  const names = Object.keys(D.items);
+  $("slots").innerHTML = "";
+  for (let i = 0; i < 6; i++) {
+    const sel = document.createElement("select");
+    sel.innerHTML = '<option value="">（空）</option>' + names.map(n => `<option>${n}</option>`).join("");
+    sel.value = D.defaultBuild[i] || "";
+    sel.className = "slot"; sel.style.width = "100%"; sel.style.margin = "2px 0";
+    sel.onchange = render;
+    $("slots").appendChild(sel);
+  }
+
+  // 铭文
+  $("ins").innerHTML = Object.entries(D.inscriptions).map(([color, group]) =>
+    `<div class="sub">${colorName[color] || color}</div>` + Object.keys(group).map(n => {
+      const st = Object.entries(group[n]).filter(([k]) => k !== "conf").map(([k, v]) => stat(k) + "+" + v).join(" ");
+      return `<label>${n} <span class="sub">${st}</span><input type="number" class="ins" data-n="${n}" data-c="${color}" min="0" max="10" value="${D.defaultIns[n] || 0}"></label>`;
+    }).join("")).join("");
+
+  $("solveRow").style.display = $("solveCard").style.display = isAdc ? "" : "none";
+  $("solveTbl").innerHTML = '<tbody><tr><td class="sub">点「自动配铭文」</td></tr></tbody>';
+  $("optTbl").innerHTML = ""; $("optMsg").textContent = "";
+  const insMinTxt = Object.entries(M.insMin || {}).map(([k, v]) => `${k}至少 ${v} 颗`).join("，");
+  $("optIntro").textContent = `枚举所有出装顺序（鞋固定第 1 件、保命装固定最后）× 所有铭文组合，按经济推算每个时刻买了哪些装备、多少级，整局加权平均打分。得分以「当前出装 + 当前铭文」为 100。${insMinTxt ? "铭文限制：" + insMinTxt + "。" : ""}`;
+  $("gpm").value = M.goldPerMin; $("t0").value = M.timeRange[0]; $("t1").value = M.timeRange[1];
+
+  $("measureCard").style.display = D.measure ? "" : "none";
+  $("measure").innerHTML = (D.measure || []).map(x => `<li>${x}</li>`).join("");
+
+  drawItemTable();
+  $("src").innerHTML = D.sources.map(([t, u]) => `<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join("");
+  render();
+}
+
+function drawItemTable() {
+  const cols = D.itemCols;
+  $("itemTbl").innerHTML = "<tr><th>装备</th>" + cols.map(c => `<th>${stat(c)}</th>`).join("") +
+    "<th>可信度</th><th>合成小件</th><th>备注</th></tr>" +
+    Object.keys(D.items).map(n => {
+      const it = D.items[n];
+      return `<tr><td>${n}</td>` + cols.map(c => `<td><input type="number" step="any" data-i="${n}" data-k="${c}" value="${it[c] || 0}"></td>`).join("") +
+        `<td class="conf-${it.conf}">${confTxt[it.conf]}</td><td>${it.recipe.length ? it.recipe.join(" + ") : '<span class="sub">待核对</span>'}</td><td class="sub">${it.note || ""}</td></tr>`;
+    }).join("");
+}
+$("itemTbl").addEventListener("input", (e) => {
+  const t = e.target; if (!t.dataset.i) return;
+  D.items[t.dataset.i][t.dataset.k] = parseFloat(t.value) || 0;
+  render();
+});
+$("ins").addEventListener("input", render);
+$("thr").addEventListener("input", render);
+
+function readBuild() {
+  const thr = $("thr").value.split(/[,，\s]+/).map(parseFloat).filter(x => !isNaN(x));
+  D.hero.thresholds = thr.length ? thr : [D.hero.maxThreshold];
+  const items = [...document.querySelectorAll(".slot")].map(s => s.value).filter(Boolean);
+  const ins = {};
+  document.querySelectorAll(".ins").forEach(el => { const v = parseInt(el.value) || 0; if (v) ins[el.dataset.n] = v; });
+  return { items, ins };
+}
+
+function render() {
+  const b = readBuild();
+  const H = D.hero, lv = H.level;
+  const s = sumStats(D, { ...b });
+  const max = Math.max(...H.thresholds);
+  const t = tierOf(s.as, H.thresholds);
+  const box = (label, val, cls = "mid") => `<div><div class="sub">${label}</div><div class="${cls}">${val}</div></div>`;
+  const asState = t.capped
+    ? `<span class="ok">已卡满 ${max}%</span>${t.overflow ? ` <span class="warn">溢出 ${t.overflow}%</span>` : ""}`
+    : `离上限 ${max}% 还差 <span class="bad">${(max - s.as).toFixed(1)}%</span>`;
+  let html = box("攻速", s.as.toFixed(1) + "%", "big " + (t.capped ? "ok" : "")) + box("攻速状态", asState);
+  if (D.model.type === "adc") {
+    html += box("暴击率 / 暴击伤害", `${s.critCapped.toFixed(1)}% / ${s.critDmgTotal.toFixed(1)}%`) +
+      box("物攻 / 吸血 / 总价", `${s.atk.toFixed(0)} / ${s.ls}% / ${s.price}`);
+    $("breakdown").textContent = `攻速 = 装备 ${itemSum(b.items, "as")}% + 铭文 ${(s.asItems - itemSum(b.items, "as")).toFixed(1)}% + 等级成长 ${s.asGrowth}% + 被动 ${s.asPassive}%`;
+  } else {
+    const r = summoner(D, s, lv);
+    html += box("法术攻击", r.ap.toFixed(0)) +
+      box("冷却缩减", `${r.cdr.toFixed(0)}%${s.cdrOverflow ? ` <span class="warn">溢出 ${s.cdrOverflow.toFixed(1)}%</span>` : ""}`) +
+      box("拆塔每秒伤害（估算）", `${r.towerDps.toFixed(0)}`, "big") +
+      box("移速", `${r.moveSpeed.toFixed(0)}（+${r.msPct.toFixed(0)}%）`) +
+      box("总价", s.price);
+    $("breakdown").textContent = `拆塔 = 机器人 ${r.robotDps.toFixed(0)}（平均 ${r.robots.toFixed(2)} 个，攻速 +${r.robotAS.toFixed(0)}%，二技能覆盖 ${(r.ultUp * 100).toFixed(0)}%） + 米莱狄自己 ${r.heroDps.toFixed(0)}。` +
+      (Number(D.model.inheritHeroAS) ? "" : " 当前假设机器人不继承米莱狄攻速。") + (Number(D.model.onHitOnTowers) ? "" : " 当前假设普攻附加伤害对塔无效。");
+  }
+  $("result").innerHTML = html;
+
+  const cnt = {};
+  document.querySelectorAll(".ins").forEach(el => cnt[el.dataset.c] = (cnt[el.dataset.c] || 0) + (parseInt(el.value) || 0));
+  const bad = Object.entries(cnt).filter(([, v]) => v !== 10).map(([k, v]) => (colorName[k] || k) + " " + v + " 颗");
+  $("warn").innerHTML = bad.length ? `<span class="bad">铭文数量不对：${bad.join("，")}（每色应为 10 颗）</span>` : "";
+
+  $("steps").innerHTML = b.items.map((_, i) => {
+    const si = sumStats(D, { items: b.items.slice(0, i + 1), ins: b.ins });
+    if (D.model.type === "adc") {
+      const ti = tierOf(si.as, H.thresholds);
+      return `${i + 1}件（${b.items[i]}）<b class="${ti.capped ? "ok" : ""}">${si.as.toFixed(1)}%</b>`;
+    }
+    const r = summoner(D, si, lv);
+    return `${i + 1}件（${b.items[i]}）<b>${r.towerDps.toFixed(0)}</b>`;
+  }).join(" → ") + (D.model.type === "adc" ? "（攻速，满级）" : "（拆塔每秒伤害，满级）");
+}
+function itemSum(items, k) { return items.reduce((a, n) => a + (D.items[n][k] || 0), 0); }
+
+$("solve").onclick = () => {
+  const { items } = readBuild();
+  const res = solveInscriptions(D, items, { insMin: D.model.insMin }).slice(0, 10);
+  $("solveTbl").innerHTML = "<tr><th></th><th>铭文</th><th>攻速</th><th>状态</th><th>暴击</th><th>暴伤</th><th>物攻</th><th>吸血</th></tr>" +
+    res.map((r, i) => {
+      const t = tierOf(r.s.as, D.hero.thresholds);
+      return `<tr><td><button data-k="${i}">套用</button></td><td>${fmtIns(r.ins)}</td><td>${r.s.as.toFixed(1)}%</td>
+        <td>${r.reached ? `<span class="ok">卡满</span>${t.overflow ? ` 溢出${t.overflow}` : ""}` : `<span class="bad">差 ${t.gap}</span>`}</td>
+        <td>${r.s.critCapped.toFixed(1)}%</td><td>${r.s.critDmgTotal}%</td><td>${r.s.atk.toFixed(0)}</td><td>${r.s.ls}%</td></tr>`;
+    }).join("");
+  bindApply("#solveTbl", res);
+};
+
+$("opt").onclick = () => {
+  const { items, ins } = readBuild();
+  if (items.length < 2) { $("optMsg").textContent = "至少选 2 件装备"; return; }
+  D.model.goldPerMin = parseFloat($("gpm").value) || D.model.goldPerMin;
+  D.model.timeRange = [parseFloat($("t0").value) || 3, parseFloat($("t1").value) || 20];
+  $("optMsg").textContent = "计算中…";
+  setTimeout(() => {
+    const t = performance.now();
+    const base = scoreBuild(D, items, ins).score;
+    const res = optimize(D, items, { insStep: parseInt($("step").value) }).slice(0, 15);
+    $("optMsg").textContent = `完成，用时 ${((performance.now() - t) / 1000).toFixed(1)} 秒`;
+    $("optTbl").innerHTML = "<tr><th></th><th>得分</th><th>出装顺序</th><th>铭文</th><th>成型时间（分钟）</th></tr>" +
+      res.map((r, i) => `<tr><td><button data-k="${i}">套用</button></td><td>${(r.score / base * 100).toFixed(1)}</td>
+        <td>${r.order.join(" → ")}</td><td>${fmtIns(r.ins)}</td><td>${r.doneAt.join(" / ")}</td></tr>`).join("");
+    bindApply("#optTbl", res);
+  }, 30);
+};
+
+function bindApply(sel, res) {
+  document.querySelectorAll(sel + " button").forEach(btn => btn.onclick = () => {
+    const r = res[+btn.dataset.k];
+    if (r.order) document.querySelectorAll(".slot").forEach((el, i) => el.value = r.order[i] || "");
+    document.querySelectorAll(".ins").forEach(el => el.value = r.ins[el.dataset.n] || 0);
+    render();
+  });
+}
+
+load(Object.keys(HEROES)[0]);
+</script>
+</body>
+</html>

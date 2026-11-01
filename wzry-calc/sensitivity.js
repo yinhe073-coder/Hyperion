@@ -1,6 +1,6 @@
 // 敏感性测试：node sensitivity.js
 // 把不确定的数值换成不同的取值，看候选方案的排名会不会变
-const DATA = require("./data.js");
+const DATA = require("./heroes/houyi.js");
 const { scoreBuild, fmtIns } = require("./calc.js");
 const clone = (o) => JSON.parse(JSON.stringify(o));
 

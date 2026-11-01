@@ -1,5 +1,5 @@
 // 命令行跑一遍候选出装：node houyi-calc/run.js
-const DATA = require("./data.js");
+const DATA = require("./heroes/houyi.js");
 const { sumStats, tierOf, solveInscriptions, fmtIns } = require("./calc.js");
 
 const builds = {

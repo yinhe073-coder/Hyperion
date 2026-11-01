@@ -1,6 +1,6 @@
 // 全局优化：node optimize.js
 // 对几套候选 6 件套，各自枚举出装顺序 × 铭文，按「每秒伤害（各阶段加权）」排名
-const DATA = require("./data.js");
+const DATA = require("./heroes/houyi.js");
 const { optimize, scoreBuild, fmtIns, rawStats } = require("./calc.js");
 
 const sets = {

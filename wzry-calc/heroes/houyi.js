@@ -1,4 +1,4 @@
-// 后羿攻速阈值计算器 —— 数据表（S45，2026-10）
+// 王者荣耀出装计算器 —— 后羿数据（S45，2026-10）
 //
 // 重要：截至 2026-10 没能找到官方公布的 S45 完整数值，下面每个数字都标了来源和可信度：
 //   conf: "high"   多个来源一致，或可以由套装合计反推验证
@@ -6,7 +6,9 @@
 //   conf: "low"    来源互相矛盾，取了最可能的值，务必进训练营核对
 // 网页上所有数值都可以直接改，版本更新时改这里或改网页输入框即可。
 
+(function () {
 const DATA = {
+  id: "houyi",
   version: "S45（2026-10，数据待训练营核对）",
 
   hero: {
@@ -46,8 +48,9 @@ const DATA = {
     timeStep: 0.25,             // 每 15 秒采样一次
     // 时间权重 [起始分钟, 权重]：中期团战（8～16 分钟）最重要
     timeWeights: [[0, 0.7], [8, 1.2], [16, 1.0]],
+    type: "adc",                // 计算模型：普攻射手（每秒伤害 = 攻速 × 普攻伤害）
     defensive: ["贤者的庇护", "名刀·司命"],
-    minLifesteal: 3,            // 国服后羿都带 3~4 夺萃，默认至少 3 颗
+    insMin: { "夺萃": 3 },      // 国服后羿都带 3~4 夺萃，默认至少 3 颗
   },
 
   // 装备：as=攻速%  atk=物攻  crit=暴击率%  critDmg=暴击效果%  ls=物理吸血%  ms=移速%  pen=护甲穿透%
@@ -91,6 +94,20 @@ const DATA = {
     },
   },
 
+  // 网页上显示的可调参数 [字段, 名称, 可信度]
+  heroParams: [
+    ["level", "等级", "high"],
+    ["growthPerLevel", "每级攻速成长 %", "medium"],
+    ["passivePerStack", "被动每层攻速 %", "low"],
+    ["passiveStacks", "被动层数（0~3）", "high"],
+    ["baseAtk", "1 级物攻", "low"],
+    ["atkPerLevel", "每级物攻成长", "low"],
+  ],
+  // 装备数值表显示的列
+  itemCols: ["price", "as", "atk", "crit", "critDmg", "ls", "pen", "ms"],
+  defaultBuild: ["急速战靴", "末世", "无尽战刃", "破晓", "逐日之弓", "贤者的庇护"],
+  defaultIns: { "无双": 10, "鹰眼": 10, "狩猎": 7, "夺萃": 3 },
+
   sources: [
     ["后羿极限攻速阈值153%、三连射后降9%攻速（超凡）", "https://www.chaofan.com/news/lnxs5c3som76u7e.html"],
     ["S44 后羿出装铭文汇总：攻速阈值调整（搜狐）", "https://m.sohu.com/a/1033952540_122725641"],
@@ -108,3 +125,5 @@ const DATA = {
 };
 
 if (typeof module !== "undefined") module.exports = DATA;
+else (window.HEROES = window.HEROES || {})[DATA.id] = DATA;
+})();
