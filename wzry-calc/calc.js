@@ -6,7 +6,7 @@
 // 属性累加、阈值判定、铭文枚举、时间轴打分、全局优化对所有英雄通用。
 
 const BASE_KEYS = ["as", "atk", "crit", "critDmg", "ls", "ms", "pen", "penFlat", "price", "pctCurHP",
-  "mBase", "mLvl", "ap", "apPct", "cdr", "allyAs", "msFlat", "apOnHit"];
+  "mBase", "mLvl", "ap", "apPct", "cdr", "allyAs", "msFlat", "apOnHit", "mpenFlat", "mpenPct"];
 
 function allInscriptions(data) {
   return Object.assign({}, ...Object.values(data.inscriptions));
@@ -178,9 +178,21 @@ function summoner(data, s, level) {
   const heroDps = heroAps * (h.baseAtk + h.atkPerLevel * (level - 1) + h.heroApRatio * ap + onHit);
   const msPct = s.ms + (s.msFlat / h.baseMs) * 100;
   const towerDps = robotDps + heroDps;
+  // 打人：一套技能（基础 + 法强系数 × 法术攻击）+ 机器人自爆，按目标法抗和法穿减免，按冷却折算成每秒伤害
+  const pv = m.pvp || { weight: 0 };
+  let pvpDps = 0;
+  if (pv.weight) {
+    const mr = Math.max(0, pv.targetMr * (1 - s.mpenPct / 100) - s.mpenFlat);
+    const red = 602 / (602 + mr);
+    const combo = (pv.comboBase + pv.comboPerLevel * (level - 1) + pv.comboRatio * ap) * red / (pv.comboCd * (1 - cdr));
+    const boom = (r.explodeBase + r.explodeRatio * ap) * red * robots / r.lifetime;
+    pvpDps = combo + boom;
+  }
+  // 拆塔和打人用几何加权：权重 w 时得分 = 拆塔^(1-w) × 打人^w，两者量纲不同也能比较
+  const core = pv.weight ? Math.pow(towerDps, 1 - pv.weight) * Math.pow(pvpDps, pv.weight) : towerDps;
   return {
-    value: towerDps * (1 + (m.msValue || 0) * msPct / 100),
-    towerDps, robotDps, heroDps, robots, robotAS, ultUp, ap, cdr: cdr * 100, msPct,
+    value: core * (1 + (m.msValue || 0) * msPct / 100),
+    towerDps, robotDps, heroDps, pvpDps, robots, robotAS, ultUp, ap, cdr: cdr * 100, msPct,
     moveSpeed: (h.baseMs + s.msFlat) * (1 + s.ms / 100),
   };
 }

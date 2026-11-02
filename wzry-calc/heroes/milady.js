@@ -41,8 +41,12 @@ const DATA = {
       perCast: 2,                // 一技能每次召唤几个（待测）
       skillCd: 8,                // 召唤技能基础冷却（秒，待测）
       mergeBonus: 0.15,          // 合体带来的平均攻击加成（合体 +30%，按一半时间是合体状态估算）
+      explodeBase: 200, explodeRatio: 0.3,   // 自爆 200(1级) + 30% 法术攻击，来源：S37 改版
     },
-    ult: { asBonus: 100, duration: 4, cd: 30 },   // 二技能：机器人 +100% 攻速；持续时间和冷却待测
+    ult: { asBonus: 100, duration: 4, cd: 30 },
+    // 打人模型：一套技能伤害 = 基础 + 每级成长 + 法强系数 × 法术攻击（全部待测，米莱狄技能系数查不到）
+    // weight：0 = 只看拆塔，1 = 只看打人，0.5 = 两者各半（几何加权）
+    pvp: { weight: 0, comboBase: 500, comboPerLevel: 40, comboRatio: 1.2, comboCd: 8, targetMr: 200 },   // 二技能：机器人 +100% 攻速；持续时间和冷却待测
     inheritHeroAS: false,        // 机器人是否继承米莱狄自身攻速（来源矛盾，待测）
     onHitOnTowers: false,        // 电刀 / 圣剑的普攻附加伤害对防御塔是否有效（待测）
     msValue: 0.3,                // 目标函数里 1% 移速折算成 0.3% 拆塔伤害（兼顾逃跑，可调；填 0 = 只看拆塔）
@@ -62,12 +66,12 @@ const DATA = {
   items: {
     "冷静之靴":   { price: 710,  cdr: 15, msFlat: 60, recipe: ["神速之靴(250)"], conf: "medium", note: "移速数值待核对" },
     "疾步之靴":   { price: 710,  msFlat: 90, recipe: ["神速之靴(250)"], conf: "low", note: "纯移速鞋，数值待核对" },
-    "痛苦面具":   { price: 2040, ap: 140, cdr: 5, recipe: [], conf: "low", note: "法穿对机器人无效" },
+    "痛苦面具":   { price: 2040, ap: 140, cdr: 5, mpenFlat: 75, recipe: [], conf: "low", note: "固定法穿 75（旧版本）；法穿只加强米莱狄自己的技能，对机器人无效" },
     "博学者之怒": { price: 2300, ap: 240, apPct: 35, recipe: ["大棒", "大棒"], conf: "low", note: "被动：法术攻击 +35%（旧版本数值）；S40 合成路径 大棒+大棒" },
     "日暮之流":   { price: 2100, ap: 160, cdr: 10, recipe: [], conf: "low", note: "" },
     "梦魇之牙":   { price: 2100, ap: 140, cdr: 10, recipe: [], conf: "low", note: "" },
     "冰霜法杖":   { price: 2100, ap: 150, recipe: [], conf: "low", note: "技能减速，逃跑用" },
-    "虚无法杖":   { price: 2110, ap: 240, recipe: [], conf: "low", note: "法穿对机器人无效，只加强米莱狄自己" },
+    "虚无法杖":   { price: 2110, ap: 240, mpenPct: 45, recipe: [], conf: "low", note: "百分比法穿 45%（旧版本）；只加强米莱狄自己的技能和自爆，对机器人普攻无效" },
     "圣贤之书":   { price: 2990, ap: 400, recipe: [], conf: "low", note: "" },
     "辉月":       { price: 2100, ap: 160, cdr: 7.5, recipe: ["血族之书", "圣者法典(800)"], conf: "medium", note: "S40：冷却 10%→7.5%，售价 2100，新增 12% 法术吸血；主动短暂无敌" },
     "金色圣剑":   { price: 2050, ap: 160, as: 20, ms: 5, apOnHit: 0.25, recipe: ["元素杖", "速击之枪(880)"], conf: "low",
@@ -79,7 +83,7 @@ const DATA = {
 
   inscriptions: {
     red: {
-      "梦魇": { ap: 4.2, conf: "medium" },
+      "梦魇": { ap: 4.2, mpenFlat: 2.4, conf: "medium" },
       "圣人": { ap: 5.3, conf: "medium" },
     },
     blue: {
@@ -88,7 +92,7 @@ const DATA = {
       "调和": { ms: 0.4, conf: "medium" },
     },
     green: {
-      "献祭": { ap: 2.4, conf: "low" },
+      "献祭": { ap: 2.4, mpenFlat: 6.4, conf: "low" },
       "心眼": { as: 0.6, conf: "low" },
       "虚空": { cdr: 0.6, conf: "medium" },
     },
@@ -112,8 +116,11 @@ const DATA = {
     ["inheritHeroAS", "机器人继承自身攻速（1=是 0=否）", "low"],
     ["onHitOnTowers", "普攻附加伤害对塔有效（1=是 0=否）", "low"],
     ["msValue", "1% 移速 = 多少 % 拆塔得分", "medium"],
+    ["pvp.weight", "打人权重（0=只拆塔，1=只打人）", "medium"],
+    ["pvp.comboRatio", "一套技能法强系数", "low"],
+    ["pvp.targetMr", "目标法抗", "medium"],
   ],
-  itemCols: ["price", "ap", "apPct", "cdr", "as", "allyAs", "ms", "msFlat"],
+  itemCols: ["price", "ap", "apPct", "cdr", "mpenFlat", "mpenPct", "as", "allyAs", "ms", "msFlat"],
   defaultBuild: ["冷静之靴", "博学者之怒", "日暮之流", "极影", "痛苦面具", "辉月"],
   defaultIns: { "圣人": 10, "狩猎": 10, "虚空": 10 },
 
