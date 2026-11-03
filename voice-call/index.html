@@ -98,9 +98,9 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
   <header>
     <div>
       <h1>四方协作通话</h1>
-      <p class="sub">四个智能体在一通语音电话里分工协作。接通后，主持人北辰先用语音播报十条协作规则并逐个点名，这一步就是部署；之后你可以随时开口、随时打断。</p>
+      <p class="sub">Claude、Codex、Cynthia、Anita 四人在一通语音电话里开私人会议。接通后，主持人Claude先用语音播报十条协作规则并逐个点名，这一步就是部署；之后你可以随时开口、随时打断。</p>
     </div>
-    <span class="chan">频道 HX-07 · 规则版本 v1.0</span>
+    <span class="chan">频道 HX-07 · 规则版本 v1.1 · 私人会议</span>
   </header>
 
   <section class="call" aria-label="通话">
@@ -112,7 +112,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
     </div>
     <div class="seats" id="seats"></div>
     <div class="log" id="log" aria-live="polite">
-      <p class="empty" id="empty">按 <b>接通</b> 开始。北辰会先念完十条规则，青岚、赤霄、白露依次签到，签到完成后话筒交给你。想跳过播报，直接按 <b>说话</b> 或输入文字即可打断。</p>
+      <p class="empty" id="empty">按 <b>接通</b> 开始。Claude会先念完十条规则，Codex、Cynthia、Anita依次签到，签到完成后话筒交给你。想跳过播报，直接按 <b>说话</b> 或输入文字即可打断。</p>
     </div>
     <div class="ctrl">
       <button class="btn-go" id="callBtn" type="button">接通</button>
@@ -121,7 +121,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
         <input type="text" id="say" placeholder="输入要说的话，例如：帮我们规划下周的产品发布" autocomplete="off" disabled>
         <button type="submit" id="sendBtn" disabled>发送</button>
       </form>
-      <p class="hint" id="hint">挂断时白露会口头做纪要。说「结束通话」也会挂断。</p>
+      <p class="hint" id="hint">挂断时Anita会口头做纪要。说「结束通话」也会挂断。</p>
     </div>
   </section>
 
@@ -136,31 +136,31 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 
 <script>
 const AGENTS = [
-  {id:"北辰", role:"主持人", duty:"分配话筒、控制节奏、裁决分歧", c:"--a1", pitch:1.0, rate:1.08},
-  {id:"青岚", role:"方案师", duty:"拆解需求、给出方案和步骤", c:"--a2", pitch:1.25, rate:1.1},
-  {id:"赤霄", role:"质检员", duty:"找风险、提异议、核对事实", c:"--a3", pitch:0.75, rate:1.0},
-  {id:"白露", role:"记录员", duty:"复述确认、记录决议和待办", c:"--a4", pitch:1.45, rate:1.1},
+  {id:"Claude", role:"主持人", duty:"分配话筒、控制节奏、裁决分歧", c:"--a1", pitch:1.0, rate:1.08},
+  {id:"Codex", role:"方案师", duty:"拆解需求、给出方案和步骤", c:"--a2", pitch:0.8, rate:1.1},
+  {id:"Cynthia", role:"质检员", duty:"找风险、提异议、核对事实", c:"--a3", pitch:1.3, rate:1.0},
+  {id:"Anita", role:"记录员", duty:"复述确认、记录决议和待办", c:"--a4", pitch:1.45, rate:1.1},
 ];
 const RULES = [
-  {k:"单一话筒", t:"同一时刻只有一个声音。主持人北辰分配话筒，其他智能体未被点名不开口。", s:"第一条，单一话筒。同一时刻只有一人发言，话筒由我分配。"},
+  {k:"单一话筒", t:"同一时刻只有一个声音。主持人Claude分配话筒，其他智能体未被点名不开口。", s:"第一条，单一话筒。同一时刻只有一人发言，话筒由我分配。"},
   {k:"开口报名", t:"每次发言先报自己的名字。电话里听众看不到人，名字就是身份。", s:"第二条，开口先报名字。"},
   {k:"短句发言", t:"每段不超过三句、约二十秒。复杂内容拆成多轮，不念列表、代码和网址。", s:"第三条，每次发言不超过三句。"},
   {k:"明确交棒", t:"发言以「交给某某」或「完毕」结尾。没有交棒语，下一位不开口。", s:"第四条，说完要交棒，用交给谁，或者完毕结尾。"},
   {k:"用户优先", t:"用户随时可以打断。用户一开口，所有智能体立刻停下，下一轮先回应用户。", s:"第五条，用户随时可以打断，用户优先。"},
-  {k:"复述确认", t:"决定、数字、时间、人名，由白露复述一遍，用户说「对」才算定下。", s:"第六条，关键信息由白露复述，用户确认才算数。"},
-  {k:"异议上报", t:"不同意见以「异议」开头，一句话讲清理由。北辰裁决；两轮无共识，交用户决定。", s:"第七条，有异议直接提，两轮谈不拢，交给用户决定。"},
+  {k:"复述确认", t:"决定、数字、时间、人名，由Anita复述一遍，用户说「对」才算定下。", s:"第六条，关键信息由Anita复述，用户确认才算数。"},
+  {k:"异议上报", t:"不同意见以「异议」开头，一句话讲清理由。Claude裁决；两轮无共识，交用户决定。", s:"第七条，有异议直接提，两轮谈不拢，交给用户决定。"},
   {k:"不懂就问", t:"没听清或信息不够时直接提问。不猜测、不编造，不确定就说不确定。", s:"第八条，不确定就问，不许编造。"},
   {k:"口头授权", t:"执行、花钱、对外发送这类事，必须听到用户说「确认执行」才进行。", s:"第九条，执行类操作，必须听到用户说确认执行。"},
-  {k:"挂断纪要", t:"挂断前白露口头总结结论、待办和负责人。通话结果以纪要为准。", s:"第十条，挂断前由白露做纪要。"},
+  {k:"挂断纪要", t:"挂断前Anita口头总结结论、待办和负责人。通话结果以纪要为准。", s:"第十条，挂断前由Anita做纪要。"},
 ];
 const DEPLOY = [
-  {sp:"北辰", tx:"通话接通。我是北辰，本次通话的主持人。现在部署协作规则，一共十条。"},
-  ...RULES.map((r,i)=>({sp:"北辰", tx:r.s, rule:i})),
-  {sp:"北辰", tx:"规则播报完毕。现在点名，青岚、赤霄、白露依次确认。交给青岚。"},
-  {sp:"青岚", tx:"青岚收到，十条规则已加载。我负责拆解需求、给出方案。完毕。", checkin:true},
-  {sp:"赤霄", tx:"赤霄收到，规则已加载。我负责找风险、提异议。完毕。", checkin:true},
-  {sp:"白露", tx:"白露收到，规则已加载。我负责复述确认和会议纪要。完毕。", checkin:true},
-  {sp:"北辰", tx:"四名智能体全部在线，规则部署完成。请讲今天要协作的事。交给用户。", done:true},
+  {sp:"Claude", tx:"通话接通。我是Claude，本次通话的主持人。现在部署协作规则，一共十条。"},
+  ...RULES.map((r,i)=>({sp:"Claude", tx:r.s, rule:i})),
+  {sp:"Claude", tx:"规则播报完毕。现在点名，Codex、Cynthia、Anita依次确认。交给Codex。"},
+  {sp:"Codex", tx:"Codex收到，十条规则已加载。我负责拆解需求、给出方案。完毕。", checkin:true},
+  {sp:"Cynthia", tx:"Cynthia收到，规则已加载。我负责找风险、提异议。完毕。", checkin:true},
+  {sp:"Anita", tx:"Anita收到，规则已加载。我负责复述确认和会议纪要。完毕。", checkin:true},
+  {sp:"Claude", tx:"四位全部在线，规则部署完成。请讲今天要协作的事。交给用户。", done:true},
 ];
 
 const $ = id => document.getElementById(id);
@@ -221,7 +221,7 @@ function connect(){
   logEl.innerHTML=""; $("minutes").hidden=true;
   document.querySelectorAll(".rules li").forEach(li=>{li.classList.remove("dep","now"); li.querySelector(".s").textContent="待部署";});
   AGENTS.forEach(a=>{const el=$("seat-"+a.id); el.classList.remove("in"); el.querySelector(".st").textContent="待签到";});
-  checkIn("北辰");
+  checkIn("Claude");
   $("bar").classList.add("live"); tick=setInterval(()=>$("timer").textContent=now(),500);
   const cb=$("callBtn"); cb.textContent="挂断"; cb.className="btn-end";
   ["talkBtn","say","sendBtn"].forEach(id=>$(id).disabled=false);
@@ -244,18 +244,18 @@ async function hangUp(){
   ["talkBtn","say","sendBtn"].forEach(id=>$(id).disabled=true);
   setStatus("已挂断");
   if(!userSaid||!sample){ addLine("", "通话结束。本次没有可记录的讨论。", true); return; }
-  setStatus("已挂断 · 白露正在整理纪要");
+  setStatus("已挂断 · Anita正在整理纪要");
   ctl=new AbortController();
   try{
     const m = await sample.json(summaryPrompt(), {modelTier:"quick", cache:false, signal:ctl.signal});
     renderMinutes(m);
-    if(m && m.spoken){ inCall=true; say({sp:"白露", tx:String(m.spoken).slice(0,200), onend:()=>{inCall=false;}}); }
+    if(m && m.spoken){ inCall=true; say({sp:"Anita", tx:String(m.spoken).slice(0,200), onend:()=>{inCall=false;}}); }
     setStatus("已挂断 · 纪要见下方");
   }catch(e){ if(e.code!=="cancelled"){ addLine("", "纪要生成失败："+errText(e), true); setStatus("已挂断"); } }
 }
 function renderMinutes(m){
   const sec=$("minutes"); sec.innerHTML=""; sec.hidden=false;
-  const h=document.createElement("h2"); h.textContent="通话纪要 · 白露"; sec.append(h);
+  const h=document.createElement("h2"); h.textContent="通话纪要 · Anita"; sec.append(h);
   const block=(title, items, fmt)=>{ if(!Array.isArray(items)||!items.length) return;
     const t=document.createElement("h3"); t.textContent=title; const ul=document.createElement("ul");
     items.forEach(x=>{const li=document.createElement("li"); li.textContent=fmt(x); ul.append(li);}); sec.append(t,ul); };
@@ -312,15 +312,15 @@ ${logText()}
 
 【现在要做的】
 针对用户最后一句话，写出智能体接下来的发言：
-- 1到4条，按发言顺序。默认由北辰先开口回应并分配话筒；如果用户点名某位智能体，就由他先说。只让真正有话可说的智能体发言。
+- 1到4条，按发言顺序。默认由Claude先开口回应并分配话筒；如果用户点名某位智能体，就由他先说。只让真正有话可说的智能体发言。
 - 每条最多三句、60个汉字以内，口语，不用列表、符号、表情、网址、代码。
 - text 里不要写自己的名字，播放时系统会自动报名。
 - 每条以交棒语结尾：交给某某，或者完毕。最后一条必须交给用户，或者向用户提一个明确的问题。
-- 用户确认了决定、数字、时间或人名时，安排白露复述。需要执行、花钱、对外发送的事，先请用户说「确认执行」。信息不足就提问，不编造。
-输出格式：每条发言单独一行 JSON，形如 {"speaker":"北辰","text":"……"}，不要代码块，不要任何其他文字。`;
+- 用户确认了决定、数字、时间或人名时，安排Anita复述。需要执行、花钱、对外发送的事，先请用户说「确认执行」。信息不足就提问，不编造。
+输出格式：每条发言单独一行 JSON，形如 {"speaker":"Claude","text":"……"}，不要代码块，不要任何其他文字。`;
 }
 function summaryPrompt(){
-  return `下面是一通多智能体语音协作电话的记录。你是记录员白露，请按规则R10写纪要。
+  return `下面是一通多智能体语音协作电话的记录。你是记录员Anita，请按规则R10写纪要。
 
 【通话记录】
 ${logText()}
@@ -332,14 +332,14 @@ function errText(e){
     session_expired:"登录已过期，请重新登录。", refused:"这段内容无法回答，换个说法试试。"})[e?.code] || "连接中断，请再说一次。";
 }
 async function respond(){
-  if(!sample){ say({sp:"北辰", tx:"这个视图连不上 Claude，我们没法回答。规则已经部署好，换到 Claude 应用里打开就能继续。交给用户。"}); return; }
+  if(!sample){ say({sp:"Claude", tx:"这个视图连不上 Claude，我们没法回答。规则已经部署好，换到 Claude 应用里打开就能继续。交给用户。"}); return; }
   const my=ctl=new AbortController(); setStatus("智能体正在组织发言");
   let pending="", n=0;
   const handle=line=>{
     line=line.trim().replace(/^```(json)?/,"").replace(/```$/,"").trim(); if(!line||n>=4) return;
     let o; try{ o=JSON.parse(line); }catch(_){ return; }
     if(!o||typeof o.text!=="string"||!o.text.trim()) return;
-    const sp = AGENTS.some(a=>a.id===o.speaker) ? o.speaker : "北辰";
+    const sp = AGENTS.some(a=>a.id===o.speaker) ? o.speaker : "Claude";
     n++; say({sp, tx:o.text.trim().slice(0,160)});
   };
   try{
