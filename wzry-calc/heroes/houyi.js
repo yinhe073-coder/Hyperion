@@ -17,7 +17,7 @@ const DATA = {
     // 每级 +1% 攻速成长（1 级为 0），15 级 = 14%。来源：2022/2023 多篇攻略。
     growthPerLevel: 1, growthConf: "medium",
     // 被动「惩戒射击」：普攻叠攻速，最多 3 层。2025-04 改为随等级成长，满级满层取 30%。
-    passiveStacks: 3, passivePerStack: 10, passiveConf: "low",
+    passiveStacks: 3, passivePerStack: 4, passiveConf: "medium",   // 官网：每层 +4% 攻速，3 层 12%
     // 后羿实际攻速上限档位：153.2%（两篇攻略分别写 153.2% / 153%~154%；S44 文章称「开启逐日后满阈值」）
     maxThreshold: 153.2, maxThresholdConf: "medium",
     // 中间档位：当前版本没有可靠数据。留空时只按最高档位计算。
@@ -38,7 +38,7 @@ const DATA = {
       { name: "坦克", hp: 7500, bonusHp: 4000, armor: 750, mr: 450 },
     ],
     // 被动每层攻速两种假设一起算（10% 是默认值，7% 对应「三连射后降 9%」的说法），保证结论两边都成立
-    passiveScenarios: [10, 7],
+    passiveScenarios: [4],      // 官网被动：每层 4%
     // 时间轴模型：按经济推算每个时刻买了哪些装备、多少级，再把整局每秒伤害取平均（装备价格自然计入）
     goldPerMin: 650,            // 发育路平均每分钟经济（估计值，可改）
     startGold: 0,               // 开局金币（出门装另算，忽略）

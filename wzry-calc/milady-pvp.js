@@ -22,7 +22,7 @@ for (const w of [0.5, 0.7]) {
   const d = clone(DATA);
   d.model.pvp.weight = w; d.model.timeRange = [3, 12];
   const base = C.scoreBuild(d, DATA.defaultBuild, DATA.defaultIns).score;
-  console.log(`\n## 打人权重 ${w}，只看 3～12 分钟（主推极影流 = 100）`);
+  console.log(`\n## 打人权重 ${w}，只看 3～12 分钟（默认出装 = 100）`);
   console.log(`  主推：${DATA.defaultBuild.join("→")} | ${C.fmtIns(DATA.defaultIns)}`);
   console.log(`        ${earlyProfile(d, DATA.defaultBuild, DATA.defaultIns)}`);
   const t = Date.now();
