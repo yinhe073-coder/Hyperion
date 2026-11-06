@@ -4,8 +4,8 @@ const DATA = require("./heroes/houyi.js");
 const { scoreBuild, fmtIns } = require("./calc.js");
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
-const gf = ["急速战靴", "末世", "无尽战刃", "破晓", "逐日之弓", "贤者的庇护"];
-const pf = ["急速战靴", "末世", "破晓", "无尽战刃", "逐日之弓", "贤者的庇护"];
+const gf = ["急速战靴", "末世", "无尽战刃", "仁者破晓", "逐日之弓", "贤者的庇护"];
+const pf = ["急速战靴", "末世", "仁者破晓", "无尽战刃", "逐日之弓", "贤者的庇护"];
 const cands = {
   "v1 国服顺序+5红月5祸源6狩猎4夺萃": [gf, { 红月: 5, 祸源: 5, 鹰眼: 10, 狩猎: 6, 夺萃: 4 }],
   "v2 国服顺序+2红月8无双6狩猎4夺萃": [gf, { 红月: 2, 无双: 8, 鹰眼: 10, 狩猎: 6, 夺萃: 4 }],
@@ -15,8 +15,8 @@ const cands = {
 };
 const scen = {
   "默认": (d) => d,
-  "破晓攻速20%": (d) => { d.items["破晓"].as = 20; return d; },
-  "破晓攻速0%": (d) => { d.items["破晓"].as = 0; return d; },
+  "破晓攻速20%": (d) => { d.items["仁者破晓"].as = 20; return d; },
+  "破晓攻速0%": (d) => { d.items["仁者破晓"].as = 0; return d; },
   "只打脆皮": (d) => { d.model.targets = [d.model.targets[0]]; return d; },
   "只打坦克": (d) => { d.model.targets = [d.model.targets[1]]; return d; },
   "被动只有7%": (d) => { d.model.passiveScenarios = [7]; return d; },

@@ -11,6 +11,7 @@
 | `heroes/houyi.js` | 后羿数据，用「普攻射手」模型（`adc`） |
 | `heroes/milady.js` | 米莱狄数据，用「召唤物拆塔」模型（`summoner`），很多数字待实测 |
 | `optimize.js` / `sensitivity.js` / `run.js` | 后羿的命令行优化、敏感性测试、阈值演示 |
+| `houyi-camp.js` | 用王者营地当前装备数据重算后羿，对比大神出装（v3） |
 | `milady-compare.js` | 米莱狄几套出装在不同机制假设下的对比和全局优化 |
 | `milady-pvp.js` | 米莱狄前期打人优化（拆塔和打人加权，只看 3～12 分钟） |
 | `milady-boots.js` | 固定疾步之靴，从装备池里自动挑剩下 5 件（选装优化，约 30 秒） |

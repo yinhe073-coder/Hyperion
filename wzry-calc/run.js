@@ -3,9 +3,9 @@ const DATA = require("./heroes/houyi.js");
 const { sumStats, tierOf, solveInscriptions, fmtIns } = require("./calc.js");
 
 const builds = {
-  "A 逐日满阈值流": ["急速战靴", "闪电匕首", "无尽战刃", "破晓", "逐日之弓", "名刀·司命"],
-  "B 吸血续航流":   ["急速战靴", "闪电匕首", "无尽战刃", "破晓", "泣血之刃", "名刀·司命"],
-  "C 末世前期流":   ["急速战靴", "末世", "无尽战刃", "破晓", "逐日之弓", "名刀·司命"],
+  "A 逐日满阈值流": ["急速战靴", "闪电匕首", "无尽战刃", "仁者破晓", "逐日之弓", "名刀·司命"],
+  "B 吸血续航流":   ["急速战靴", "闪电匕首", "无尽战刃", "仁者破晓", "泣血之刃", "名刀·司命"],
+  "C 末世前期流":   ["急速战靴", "末世", "无尽战刃", "仁者破晓", "逐日之弓", "名刀·司命"],
 };
 const max = DATA.hero.maxThreshold;
 
@@ -31,7 +31,7 @@ for (const [name, items] of Object.entries(builds)) {
 }
 
 // 推荐方案：用铭文让「4 件套」就卡满 153.2%，第 5、6 件自由选择
-const core4 = ["急速战靴", "闪电匕首", "无尽战刃", "破晓"];
+const core4 = ["急速战靴", "闪电匕首", "无尽战刃", "仁者破晓"];
 console.log(`\n=== D 4件提前卡满：${core4.join(" → ")} ===`);
 const d = solveInscriptions(DATA, core4).slice(0, 5);
 for (const r of d) {

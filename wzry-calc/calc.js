@@ -6,7 +6,8 @@
 // 属性累加、阈值判定、铭文枚举、时间轴打分、全局优化对所有英雄通用。
 
 const BASE_KEYS = ["as", "atk", "crit", "critDmg", "ls", "ms", "pen", "penFlat", "price", "pctCurHP",
-  "mBase", "mLvl", "ap", "apPct", "cdr", "allyAs", "msFlat", "apOnHit", "mpenFlat", "mpenPct"];
+  "mBase", "mLvl", "ap", "apPct", "cdr", "allyAs", "msFlat", "apOnHit", "mpenFlat", "mpenPct",
+  "asOnHit", "critDmgDyn", "onHitFlat", "pBase", "pLvl", "pctBonusHp", "execute", "hp"];
 
 function allInscriptions(data) {
   return Object.assign({}, ...Object.values(data.inscriptions));
@@ -37,6 +38,10 @@ function derive(data, s, level, stacks) {
   const h = data.hero;
   level = level ?? h.level;
   stacks = stacks ?? h.passiveStacks ?? 0;
+  // 无尽战刃：暴击效果 = 20% + 暴击率 / 2（最多 50%）
+  if (s.critDmgDyn) s.critDmg += Math.min(50, 20 + Math.min(s.crit, 100) / 2);
+  // 影刃：普攻命中 +10% 攻速，暴击翻倍 → 持续攻击时约 10% × (1 + 暴击率)
+  if (s.asOnHit) s.as += s.asOnHit * (1 + Math.min(s.crit, 100) / 100);
   s.asItems = s.as;
   s.asRaw = s.as;
   s.asGrowth = (h.growthPerLevel || 0) * (level - 1);
@@ -143,7 +148,9 @@ function hitDamage(data, s, level, target) {
   const critMult = 1 + crit * ((200 + s.critDmg - 100) / 100);
   const k = data.model.armorConst || 602;
   const arm = Math.max(0, target.armor * (1 - s.pen / 100) - s.penFlat);
-  const phys = atk * critMult + (s.pctCurHP / 100) * target.hp * (data.model.avgHpRatio ?? 0.6);
+  const phys = (atk * critMult + s.onHitFlat + s.pBase + s.pLvl * level
+    + (s.pctBonusHp / 100) * (target.bonusHp || 0)
+    + (s.pctCurHP / 100) * target.hp * (data.model.avgHpRatio ?? 0.6)) * (1 + (s.execute / 100) * 0.5);
   const magic = s.mBase + s.mLvl * level;
   return phys * (k / (k + arm)) + magic * (k / (k + target.mr));
 }
@@ -330,12 +337,12 @@ function optimizeSet(data, fixed, pool, k, opts = {}) {
   const ins = opts.refIns || data.defaultIns;
   const def = data.model.defensive || [];
   const coarse = [];
-  for (const combo of combinations(pool.filter((n) => !fixed.includes(n)), k)) {
+  for (const combo of combinations(pool.filter((n) => !fixed.includes(n) && !(opts.tail || []).includes(n)), k)) {
     const last = combo.filter((n) => def.includes(n));
     const mid = combo.filter((n) => !last.includes(n));
     let best = null;
     for (const p of permutations(mid)) {
-      const order = [...fixed, ...p, ...last];
+      const order = [...fixed, ...p, ...last, ...(opts.tail || [])];
       const r = scoreBuild(data, order, ins, opts.model || {});
       if (!best || r.score > best.score) best = { order, score: r.score };
     }
