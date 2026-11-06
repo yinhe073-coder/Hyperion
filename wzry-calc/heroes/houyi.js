@@ -112,7 +112,7 @@ const DATA = {
   // 装备数值表显示的列
   itemCols: ["price", "as", "atk", "crit", "ls", "pen", "onHitFlat", "ms"],
   defaultBuild: ["急速战靴", "影刃", "无尽战刃", "仁者破晓", "末世", "贤者的庇护"],
-  defaultIns: { "无双": 10, "鹰眼": 10, "隐匿": 7, "夺萃": 3 },
+  defaultIns: { "无双": 10, "鹰眼": 10, "狩猎": 7, "夺萃": 3 },
 
   sources: [
     ["王者营地 后羿大神出装与装备库（2026-11-06）", "https://camp.qq.com/h5/webdist/equip-share/index.html?heroId=169"],
