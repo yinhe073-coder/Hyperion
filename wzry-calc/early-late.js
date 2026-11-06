@@ -22,8 +22,13 @@ const PASSIVE = {
   "碎星锤": { pen: 30 },
   "暗影战斧": { penFlatBase: 84, penFlatLvl: 6.43 },  // 90~180 随等级
   "宗师之力": { skillHit: 0.8 },                      // 用技能后下次普攻 +80% 物攻
-  "追击刀锋": { atkStack: 45 },                      // 击杀野怪叠物攻，最多 15 层 × 3
-  "贪婪之噬": { atkStack: 75, cdrStack: 5 },          // 最多 25 层 × 3 物攻、0.2% 冷却
+  // 打野刀：击杀野怪叠层，按「每级约 2 层」估算
+  "追击刀锋": { stackAtk: 3, stackMax: 15, jungle: 1 },
+  "贪婪之噬": { stackAtk: 3, stackCdr: 0.2, stackMax: 25, jungle: 1 },
+  "游击弯刀": { stackAp: 6, stackMax: 15, jungle: 1 },
+  "符文大剑": { stackAp: 6, stackCdr: 0.2, stackMax: 25, jungle: 1 },
+  "狩猎宽刃": { jungle: 1 },
+  "神速之靴": { msFlat: 30 },
   "急速战靴": { msFlat: 50 }, "冷静之靴": { msFlat: 50 }, "抵抗之靴": { msFlat: 50 }, "影忍之足": { msFlat: 50 },
   "疾步之靴": { msFlat: 70 }, "秘法之靴": { msFlat: 50, mpenFlatBase: 55.7, mpenFlatLvl: 4.29 },
   "博学者之怒": { apPct: 30 },
@@ -108,12 +113,12 @@ function derive(hero, a, b, level) {
   const g = (k) => (a[k] || 0) + (b[k] || 0);
   const r = {
     price: a.price, level,
-    atk: hero.baseAtk + hero.atkLvl * (level - 1) + g("atk") + g("atkStack"),
-    ap: g("ap") * (1 + g("apPct") / 100),
+    atk: hero.baseAtk + hero.atkLvl * (level - 1) + g("atk") + g("stackAtk") * Math.min(g("stackMax") || 0, 2 * level),
+    ap: (g("ap") + g("stackAp") * Math.min(g("stackMax") || 0, 2 * level)) * (1 + g("apPct") / 100),
     crit: Math.min(100, hero.baseCrit + g("crit")), critRaw: hero.baseCrit + g("crit"),
     pen: g("pen"), penFlat: g("penFlat") + g("penFlatBase") + g("penFlatLvl") * level,
     mpenFlat: g("mpenFlat") + g("mpenFlatBase") + g("mpenFlatLvl") * level, mpenPct: g("mpenPct"),
-    cdrRaw: g("cdr") + g("cdrStack"), ls: g("ls"), hp: g("hp"),
+    cdrRaw: g("cdr") + g("stackCdr") * Math.min(g("stackMax") || 0, 2 * level), ls: g("ls"), hp: g("hp"), jungle: g("jungle") > 0,
     onHitFlat: g("onHitFlat"), pBase: g("pBase") + g("pLvl") * level, pctBonusHp: g("pctBonusHp"),
     m: g("mBase") + g("mLvl") * level, execute: g("execute"), skillHit: g("skillHit"),
     curHpPctPer3s: g("curHpPctPer3s"), proc: a.procs, dmgPerAp: g("dmgPerAp"),
@@ -171,7 +176,7 @@ const HEROES = {
       return (smash + (150 + 0.5 * s.atk) + (smash + 270) + 2 * (s.atk * cm + 270) + s.skillHit * s.atk) * r;
     },
     // 刷野：普攻 × 攻速 + 打野刀对野怪的灼烧
-    farm4(s) { return (1 + tierOf(s.as, this.T) / 100) * s.atk * s.critMult + (s.atk > 0 ? 2 * 90 : 0); },
+    farm4(s) { return (1 + tierOf(s.as, this.T) / 100) * s.atk * s.critMult + (s.jungle ? 2 * 90 : 0); },
     fullRest: ["急速战靴", "无尽战刃", "暗影战斧", "名刀·司命"],
     lateItems: ["无尽战刃", "影刃", "宗师之力", "暗影战斧", "贪婪之噬", "碎星锤", "末世", "强者破军", "泣血之刃", "名刀·司命", "贤者的庇护", "血魔之怒", "冰痕之握", "闪电匕首", "制裁之刃"],
     lateBoots: ["急速战靴", "抵抗之靴", "影忍之足"],
@@ -215,6 +220,32 @@ const HEROES = {
     },
   },
 };
+
+// 4 级强度 = sqrt(爆发 × 发育) × (1 + 移速权重 × 移速加成%)；移速加成 = 鞋子固定移速 ÷ 基础移速 + 百分比移速
+const MS_WEIGHT = { jungle: 0.5, lane: 0.3 };
+function powerOf(H, s, t) {
+  const msPct = (s.msFlat / (H.baseMs || 370)) * 100 + s.msPct;
+  const w = H.msWeight ?? (H.forceFirst ? MS_WEIGHT.jungle : MS_WEIGHT.lane);
+  return Math.sqrt(H.burst4(s, t) * H.farm4(s)) * (1 + w * msPct / 100);
+}
+
+// ---------- 米莱狄的两个分路版本 ----------
+// 打野：带惩戒，出门游击弯刀（法术打野刀），后期固定符文大剑；刷野时打野刀灼烧 + 机器人一起打（机器人吃野怪击杀召唤）
+HEROES["米莱狄·打野"] = Object.assign(Object.create(HEROES["米莱狄"]), {
+  forceFirst: "游击弯刀", budget4: 1400,
+  starts: [["游击弯刀", "冷静之靴"], ["游击弯刀", "秘法之靴"], ["游击弯刀", "疾步之靴"], ["游击弯刀", "符文大剑"],
+    ["游击弯刀", "回响之杖"], ["游击弯刀", "梦魇之牙"], ["游击弯刀", "博学者之怒"], ["游击弯刀", "日暮之流"]],
+  farm4(s) { return HEROES["米莱狄"].farm4(s) + (s.jungle ? 2 * (75 + 0.0045 * 3000) : 0); },
+  fullRest: ["符文大剑", "冷静之靴", "博学者之怒", "贤者天书", "虚无法杖"],
+  lateFixed: ["符文大剑"],
+  lateItems: ["梦魇之牙", "痛苦面具", "日暮之流", "凝冰之息", "博学者之怒", "贤者天书", "回响之杖", "虚无法杖", "辉月", "炽热支配", "金色圣剑", "贤者的庇护", "名刀·司命"],
+});
+// 对抗路：带传送，单人线；4 级时经济约 1200 金（比中路少）
+HEROES["米莱狄·对抗路"] = Object.assign(Object.create(HEROES["米莱狄"]), {
+  budget4: 1200, msWeight: 0.5,          // 单人线要换线、躲 gank、拆完塔撤退，移速按打野同等看待
+  starts: [["冷静之靴", "回响之杖"], ["秘法之靴", "梦魇之牙"], ["疾步之靴", "回响之杖"], ["冷静之靴", "痛苦面具"],
+    ["秘法之靴", "凝冰之息"], ["冷静之靴", "日暮之流"], ["疾步之靴", "梦魇之牙"], ["秘法之靴", "博学者之怒"]],
+});
 
 // ---------- 购买顺序模拟（按真实配方展开到小件）----------
 // 每一步在「还没买、且子件都已凑齐」的节点里，选「每 1 金增加的 4 级强度最多」的那个；背包最多 6 格
@@ -291,7 +322,7 @@ function early(heroName) {
   const insList = insCandidates(INS[H.insType]);
   const bagAt = (steps, budget) => { let bag = []; for (const st of steps) if (st.gold <= budget) bag = st.bag; return bag; };
   // 4 级强度 = 爆发 × 发育速度 的几何平均（两者各占一半）
-  const power = (items, ins) => { const s = total(H, items, ins, lvl); return Math.sqrt(H.burst4(s, t) * H.farm4(s)); };
+  const power = (items, ins) => powerOf(H, total(H, items, ins, lvl), t);
   let best = null;
   const all = [];
   for (const start of H.starts) {
@@ -319,8 +350,9 @@ function late(heroName) {
   const combos = (arr, k) => (k === 0 ? [[]] : arr.length < k ? [] : [...combos(arr.slice(1), k - 1).map((c) => [arr[0], ...c]), ...combos(arr.slice(1), k)]);
   let maxHit = -1, top = [], bestDmg = 0, n = 0, bestDmgRow = null;
   const perIns = new Map();               // 每套铭文：后期能卡住的最多阈值数，以及此时伤害最高的出装
-  for (const boot of H.lateBoots) for (const c of combos(H.lateItems, 5)) {
-    const items = [boot, ...c];
+  const fixed = H.lateFixed || [];
+  for (const boot of H.lateBoots) for (const c of combos(H.lateItems.filter((n) => !fixed.includes(n)), 5 - fixed.length)) {
+    const items = [boot, ...fixed, ...c];
     const ri = rawItems(H, items);
     for (const { ins, raw } of insList) {
       const s = derive(H, ri, raw, 15);
@@ -345,7 +377,7 @@ function late(heroName) {
 function joint(heroName) {
   const H = HEROES[heroName];
   const e = early(heroName), L = late(heroName);
-  const pw = (bag, ins) => { const st = total(H, bag, ins, 4); return Math.sqrt(H.burst4(st, H.target4) * H.farm4(st)); };
+  const pw = (bag, ins) => powerOf(H, total(H, bag, ins, 4), H.target4);
   const rows = [];
   for (const [key, l] of L.perIns) {
     let bestE = 0, bestStart = null;
@@ -394,7 +426,7 @@ if (require.main === module && process.argv.includes("--joint")) {
     const full = [...e.start, ...H.fullRest.filter((n) => !e.start.includes(n))];
     const last = e.steps[e.steps.length - 1];
     const fsteps = e.steps.concat(planPurchaseInner(H, H.fullRest.filter((n) => !e.start.includes(n)),
-      (bag) => { const st = total(H, bag, e.ins, 8); return Math.sqrt(H.burst4(st, H.target4) * H.farm4(st)); }, last.bag, last.gold));
+      (bag) => powerOf(H, total(H, bag, e.ins, 8), H.target4), last.bag, last.gold));
     console.log(`  完整 6 件（${full.join(" → ")}）的小件顺序：`);
     console.log("   " + fsteps.map((st) => `${st.merged ? "【" + st.buy + "】" : st.buy}`).join(" → "));
     const s4 = total(H, e.bag, e.ins, 4);
