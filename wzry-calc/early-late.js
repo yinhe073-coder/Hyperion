@@ -318,6 +318,7 @@ function late(heroName) {
   const insList = insCandidates(INS[H.insType], 2).map((ins) => ({ ins, raw: rawIns(H, ins) }));
   const combos = (arr, k) => (k === 0 ? [[]] : arr.length < k ? [] : [...combos(arr.slice(1), k - 1).map((c) => [arr[0], ...c]), ...combos(arr.slice(1), k)]);
   let maxHit = -1, top = [], bestDmg = 0, n = 0, bestDmgRow = null;
+  const perIns = new Map();               // 每套铭文：后期能卡住的最多阈值数，以及此时伤害最高的出装
   for (const boot of H.lateBoots) for (const c of combos(H.lateItems, 5)) {
     const items = [boot, ...c];
     const ri = rawItems(H, items);
@@ -329,16 +330,57 @@ function late(heroName) {
       const dmg = H.late(s);
       n++;
       if (dmg > bestDmg) { bestDmg = dmg; bestDmgRow = { items, ins, hit, dmg, s, caps }; }
+      const key = fmtIns(ins), cur = perIns.get(key);
+      if (!cur || hit > cur.hit || (hit === cur.hit && dmg > cur.dmg)) perIns.set(key, { ins, items, hit, dmg, caps });
       if (hit > maxHit) { maxHit = hit; top = []; }
       if (hit === maxHit) { top.push({ items, ins, hit, over, dmg, s, caps }); if (top.length > 400) { top.sort((x, y) => y.dmg - x.dmg); top.length = 50; } }
     }
   }
   top.sort((x, y) => y.dmg - x.dmg);
-  return { maxHit, top: top.slice(0, 5), bestDmg, bestDmgRow, nCombos: n };
+  return { maxHit, top: top.slice(0, 5), bestDmg, bestDmgRow, nCombos: n, perIns };
+}
+
+// 铭文整局不能换：找一套铭文同时照顾 4 级和大后期
+// 4 级强度 = 各起手方案（背包按各自最佳购买顺序）配这套铭文的最高强度
+function joint(heroName) {
+  const H = HEROES[heroName];
+  const e = early(heroName), L = late(heroName);
+  const pw = (bag, ins) => { const st = total(H, bag, ins, 4); return Math.sqrt(H.burst4(st, H.target4) * H.farm4(st)); };
+  const rows = [];
+  for (const [key, l] of L.perIns) {
+    let bestE = 0, bestStart = null;
+    for (const a of e.all) { const v = pw(a.bag, l.ins); if (v > bestE) { bestE = v; bestStart = a.start; } }
+    rows.push({ key, ins: l.ins, early: bestE, start: bestStart, hit: l.hit, lateDmg: l.dmg, items: l.items, caps: l.caps });
+  }
+  const eMax = Math.max(...rows.map((r) => r.early));
+  rows.forEach((r) => { r.earlyPct = r.early / eMax * 100; r.latePct = r.lateDmg / L.bestDmg * 100; });
+  const capped = rows.filter((r) => r.hit === L.maxHit).sort((a, b) => b.earlyPct - a.earlyPct || b.latePct - a.latePct);
+  const oneLess = rows.filter((r) => r.hit === L.maxHit - 1).sort((a, b) => b.earlyPct - a.earlyPct || b.latePct - a.latePct);
+  const earlyBest = rows.slice().sort((a, b) => b.earlyPct - a.earlyPct)[0];
+  // 推荐方案的购买顺序（用这套铭文重排）
+  const rec = capped[0];
+  const steps = planPurchase(H, rec.start, rec.ins, (bag) => pw(bag, rec.ins));
+  return { e, L, capped, oneLess, earlyBest, rec, steps };
 }
 
 // ---------- 输出 ----------
-if (require.main === module) {
+if (require.main === module && process.argv.includes("--joint")) {
+  const which = process.argv[2] && process.argv[2] !== "--joint" ? [process.argv[2]] : Object.keys(HEROES);
+  for (const h of which) {
+    const H = HEROES[h];
+    const J = joint(h);
+    const show = (r) => `${fmtIns(r.ins).padEnd(22)} | 4级 ${r.earlyPct.toFixed(1)}%（起手 ${r.start.join("→")}）| 后期卡 ${r.hit} 个，伤害 ${r.latePct.toFixed(1)}%：${r.items.join("+")}`;
+    console.log(`\n################ ${h}（4 级以「任意铭文下的最强」为 100%，后期伤害以「全局最高」为 100%）`);
+    console.log(`  ★ 推荐（后期卡满 ${J.L.maxHit} 个阈值的铭文里，4 级最强）：`);
+    J.capped.slice(0, 4).forEach((r) => console.log("     " + show(r)));
+    if (J.oneLess.length) { console.log(`  少卡 1 个阈值、换 4 级更强：`); J.oneLess.slice(0, 2).forEach((r) => console.log("     " + show(r))); }
+    console.log(`  对照·只看 4 级最强的铭文：\n     ${show(J.earlyBest)}`);
+    const r = J.rec, s4 = total(H, (J.e.all.find((a) => a.start === r.start) || {}).bag || [], r.ins, 4);
+    console.log(`  推荐方案 4 级面板：物攻 ${s4.atk.toFixed(0)} 法攻 ${s4.ap.toFixed(0)} 攻速 ${s4.as.toFixed(1)}% 暴击 ${s4.crit.toFixed(1)}% 暴击效果 ${s4.critDmg.toFixed(0)}% 物穿 ${s4.penFlat.toFixed(0)} 法穿 ${s4.mpenFlat.toFixed(0)}`);
+    console.log(`  推荐方案购买顺序：` + J.steps.map((st) => `${st.gold}金 ${st.merged ? "【" + st.buy + "】" : st.buy}`).join(" → "));
+    console.log(`  后期阈值：` + r.caps.map(([n, v, th]) => `${n.split("（")[0]} ${v.toFixed(1)}${v + 1e-9 >= th ? "✔" : "✘"}`).join("  "));
+  }
+} else if (require.main === module) {
   const which = process.argv[2] ? [process.argv[2]] : Object.keys(HEROES);
   for (const h of which) {
     const H = HEROES[h];
@@ -367,4 +409,4 @@ if (require.main === module) {
     }
   }
 }
-module.exports = { HEROES, total, derive, rawItems, rawIns, early, late, planPurchase, itemStats, INS };
+module.exports = { joint, HEROES, total, derive, rawItems, rawIns, early, late, planPurchase, itemStats, INS };
