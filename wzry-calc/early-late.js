@@ -445,6 +445,7 @@ if (require.main === module && process.argv.includes("--joint")) {
   const which = process.argv[2] && process.argv[2] !== "--joint" ? [process.argv[2]] : Object.keys(HEROES);
   for (const h of which) {
     const H = HEROES[h];
+    if (!H.starts || !H.lateItems) { console.log(`\n${h}：只配置了 practical.js 用的模型，请运行 node practical.js ${h}`); continue; }
     const J = joint(h);
     const show = (r) => `${fmtIns(r.ins).padEnd(22)} | 4级 ${r.earlyPct.toFixed(1)}%（起手 ${r.start.join("→")}）| 后期卡 ${r.hit} 个，伤害 ${r.latePct.toFixed(1)}%：${r.items.join("+")}`;
     console.log(`\n################ ${h}（4 级以「任意铭文下的最强」为 100%，后期伤害以「全局最高」为 100%）`);
@@ -461,6 +462,7 @@ if (require.main === module && process.argv.includes("--joint")) {
   const which = process.argv[2] ? [process.argv[2]] : Object.keys(HEROES);
   for (const h of which) {
     const H = HEROES[h];
+    if (!H.starts || !H.lateItems) { console.log(`\n${h}：只配置了 practical.js 用的模型，请运行 node practical.js ${h}`); continue; }
     console.log(`\n################ ${h}`);
     const e = early(h);
     console.log(`【4 级】经济按 ${H.budget4} 金估算；起手装备方案对比（强度 = 爆发 × 发育的几何平均，最佳 = 100）：`);
