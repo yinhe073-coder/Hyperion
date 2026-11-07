@@ -37,11 +37,19 @@ const PASSIVE = {
   "痛苦面具": { curHpPctPer3s: 12 },                  // 技能命中：3 秒内 4 次 3% 当前生命
   "凝冰之息": { procBase: 69.6, procLvl: 5.36, procAp: 0.15, procCd: 3 },
   "回响之杖": { procBase: 130, procLvl: 10, procAp: 0.28, procCd: 5 },
-  "贤者天书": { dmgPerAp: 0.005 },                    // 每 100 法攻 +0.5% 增伤
+  "贤者天书": { dmgPerAp: 0.00005 },                  // 每 100 法攻 +0.5% 增伤 = 每 1 法攻 +0.005%
   "金色圣剑": { onHitFlat: 60, apOnHitFull: 0.3, asOnHit: 20 },
+  // 廉颇相关肉装被动（按最大生命折算）
+  "红莲斗篷": { burnHpPct: 1.5 },                      // 每秒 1.5% 最大生命法伤
+  "怒龙剑盾": { procHpPct: 3.5, procHpCd: 2 },         // 普攻/技能 3.5% 最大生命物伤（冷却 2 秒）
+  "血魔之怒": { hitHpPct: 1.5 },                      // 普攻 +1.5% 最大生命物伤
+  "侵掠·怒魂": { hitHpPct: 1.5 },
+  "霸者重装": { hpPct: 4 },
+  "魔女斗篷": { shield: 600 }, "冰霜冲击": { shieldHpPct: 10 }, "旭日初光": { shieldHpPct: 4 },
 };
 const FIELD = { phyAttack: ["atk", 1], attackSpeed: ["as", 0.01], criticalHit: ["crit", 0.01], healthSteal: ["ls", 0.01],
-  magicAttack: ["ap", 1], cdReduce: ["cdr", 0.01], moveSpeed: ["ms", 0.01], healthPoint: ["hp", 1], mgcHemophagia: ["mls", 0.01] };
+  magicAttack: ["ap", 1], cdReduce: ["cdr", 0.01], moveSpeed: ["ms", 0.01], healthPoint: ["hp", 1], mgcHemophagia: ["mls", 0.01],
+  phyDefence: ["armor", 1], magicDefence: ["mr", 1] };
 function itemStats(name, ranged) {
   const e = byName[name];
   if (!e) throw new Error("营地装备库里没有：" + name);
@@ -71,6 +79,11 @@ const INS = {
     red: { 无双: { crit: 0.7, critDmg: 3.6 }, 祸源: { crit: 1.6 }, 红月: { as: 1.6, crit: 0.5 }, 异变: { atk: 2, penFlat: 3.6 } },
     blue: { 狩猎: { as: 1, msPct: 1 }, 夺萃: { ls: 1 }, 隐匿: { atk: 1.6, msPct: 1 } },
     green: { 鹰眼: { atk: 0.9, penFlat: 6.4 } },
+  },
+  tank: {
+    red: { 宿命: { hp: 33.7, armor: 2.3, as: 1 }, 异变: { atk: 2, penFlat: 3.6 } },
+    blue: { 调和: { hp: 45, msPct: 0.4 }, 狩猎: { as: 1, msPct: 1 } },
+    green: { 虚空: { hp: 37.5, cdr: 0.6 }, 鹰眼: { atk: 0.9, penFlat: 6.4 } },
   },
   magic: {
     red: { 梦魇: { ap: 4.2, mpenFlat: 2.4 }, 圣人: { ap: 5.3 } },
@@ -123,7 +136,14 @@ function derive(hero, a, b, level) {
     m: g("mBase") + g("mLvl") * level, execute: g("execute"), skillHit: g("skillHit"),
     curHpPctPer3s: g("curHpPctPer3s"), proc: a.procs, dmgPerAp: g("dmgPerAp"),
     msFlat: g("msFlat"), msPct: g("ms") + g("msPct"),
+    burnHpPct: g("burnHpPct"), procHpPct: g("procHpPct"), hitHpPct: g("hitHpPct"), shield: g("shield"), shieldHpPct: g("shieldHpPct"),
   };
+  if (hero.baseHp) {                       // 坦克：生命、护甲、法抗
+    r.maxHp = (hero.baseHp + hero.hpLvl * (level - 1) + g("hp")) * (1 + g("hpPct") / 100);
+    r.armor = hero.baseArmor + hero.armorLvl * (level - 1) + g("armor");
+    r.mr = hero.baseMr + hero.mrLvl * (level - 1) + g("mr");
+    r.ehp = (r.maxHp + r.shield + r.shieldHpPct / 100 * r.maxHp) * ((1 + r.armor / 602) + (1 + r.mr / 602)) / 2;
+  }
   r.critDmg = hero.baseCritDmg + g("critDmg") + (g("critDmgDyn") ? Math.min(50, 20 + r.crit / 2) : 0);
   r.cdr = Math.min(40, r.cdrRaw);
   r.as = (hero.growthAS || 0) * (level - 1) + g("as") + g("asOnHit") * (1 + r.crit / 100) + (hero.passiveAS || 0);
@@ -228,6 +248,31 @@ function powerOf(H, s, t) {
   const w = H.msWeight ?? (H.forceFirst ? MS_WEIGHT.jungle : MS_WEIGHT.lane);
   return Math.sqrt(H.burst4(s, t) * H.farm4(s)) * (1 + w * msPct / 100);
 }
+
+// ---------- 廉颇（对抗路）----------
+// 官网技能：一技能 150~250+65% 物攻（击飞）+ 第三下普攻 200~500+15%；二技能 100~225+100% 物攻+4% 最大生命（中心最高 +100%）；
+// 大招三段：60/90/120+60%+3% 生命，90+90%+4% 生命，120+150%+6% 生命；被动：满战意 20% 减伤、+30% 攻速
+// 基础生命 / 护甲 / 法抗：估。强度 = sqrt(爆发 × 等效血量)
+HEROES["廉颇"] = {
+  ranged: false, insType: "tank", baseAtk: 170, atkLvl: 11, baseCrit: 0, baseCritDmg: 200, growthAS: 1, passiveAS: 30,
+  baseHp: 3300, hpLvl: 260, baseArmor: 150, armorLvl: 15, baseMr: 75, mrLvl: 6, baseMs: 380,
+  T: [100], budget4: 1300, target4: { armor: 200, mr: 150, hp: 2600 },
+  burst4(s, t) {
+    const h = s.maxHp, a = s.atk, r = physRed(s, t.armor);
+    const phys = (170 + 0.65 * a) + (260 + 0.15 * a) + 1.5 * (100 + a + 0.04 * h)
+      + (60 + 0.6 * a + 0.03 * h) + (90 + 0.9 * a + 0.04 * h) + (120 + 1.5 * a + 0.06 * h)
+      + s.procHpPct / 100 * h * 2 + s.hitHpPct / 100 * h * 3;
+    return phys * r + s.burnHpPct / 100 * h * 3 * magRed(s, t.mr);
+  },
+  farm4(s) { return s.ehp; },            // 坦克用等效血量代替刷野速度
+  caps(s) { return [["冷却≥40%", s.cdrRaw, 40]]; },
+  late(s) {
+    const h = s.maxHp, a = s.atk, r = physRed(s, 600);
+    const dmg = ((250 + 0.65 * a) + (500 + 0.15 * a) + 1.5 * (225 + a + 0.04 * h) + (120 + 0.6 * a + 0.03 * h) + (90 + 0.9 * a + 0.04 * h)
+      + (120 + 1.5 * a + 0.06 * h) + s.procHpPct / 100 * h * 2 + s.hitHpPct / 100 * h * 4) * r + s.burnHpPct / 100 * h * 4 * magRed(s, 400);
+    return Math.sqrt(dmg * s.ehp) / (1 - Math.min(40, s.cdrRaw) / 100 * 0.5);   // 冷却让技能更勤，按一半效果计
+  },
+};
 
 // ---------- 米莱狄的两个分路版本 ----------
 // 打野：带惩戒，出门游击弯刀（法术打野刀），后期固定符文大剑；刷野时打野刀灼烧 + 机器人一起打（机器人吃野怪击杀召唤）
@@ -441,4 +486,4 @@ if (require.main === module && process.argv.includes("--joint")) {
     }
   }
 }
-module.exports = { joint, HEROES, total, derive, rawItems, rawIns, early, late, planPurchase, itemStats, INS };
+module.exports = { powerOf, recipe, planPurchaseInner, tierOf, fmtIns, insCandidates, joint, HEROES, total, derive, rawItems, rawIns, early, late, planPurchase, itemStats, INS };
