@@ -1,0 +1,15 @@
+{
+  "name": "opportunity-radar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "每天自动抓取公开需求信号、打分、输出机会日报",
+  "scripts": {
+    "radar": "node radar.js",
+    "dry": "node radar.js --dry"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  }
+}
