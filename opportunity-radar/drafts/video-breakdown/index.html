@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>拆片报告 — 把一条爆款短视频，拆成可以照着拍的逐镜头清单</title>
+<meta name="description" content="发来视频链接，24 小时内收到一份图文报告：每个镜头的时长、景别、字幕、转场和节奏，并标出哪些是实拍、哪些是 AI 生成或模板做的。">
+<style>
+:root{--bg:#fbfaf7;--fg:#1c1b19;--muted:#6b675f;--line:#e4e0d6;--accent:#1f6f5c;--accent-fg:#fff;--card:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#161614;--fg:#eceae4;--muted:#a09c92;--line:#33312c;--accent:#5fc9ad;--accent-fg:#10231e;--card:#1e1e1b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
+main{max-width:680px;margin:0 auto;padding:56px 20px 72px}
+.tag{display:inline-block;font-size:13px;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:2px 12px;margin-bottom:20px}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.25;margin:0 0 16px;letter-spacing:-.01em}
+.sub{font-size:19px;color:var(--muted);margin:0 0 32px}
+ul{list-style:none;padding:0;margin:0 0 32px}
+li{padding:14px 0 14px 30px;border-top:1px solid var(--line);position:relative}
+li:last-child{border-bottom:1px solid var(--line)}
+li::before{content:"";position:absolute;left:4px;top:26px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+.price{font-size:22px;font-weight:600;margin:0 0 4px}
+.note{font-size:14px;color:var(--muted);margin:0 0 18px}
+form{display:flex;gap:10px;flex-wrap:wrap}
+input[type=email]{flex:1 1 220px;min-width:0;padding:12px 14px;font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px}
+button,.btn{display:inline-block;padding:12px 22px;font:inherit;font-weight:600;color:var(--accent-fg);background:var(--accent);border:0;border-radius:10px;cursor:pointer;text-decoration:none}
+footer{margin-top:40px;font-size:13px;color:var(--muted)}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <span class="tag">筹备中 · 开放预约</span>
+  <h1>把一条爆款短视频，拆成可以照着拍的逐镜头清单</h1>
+  <p class="sub">发来视频链接，24 小时内收到一份图文报告：每个镜头的时长、景别、字幕、转场和节奏，并标出哪些是实拍、哪些是 AI 生成或模板做的。</p>
+  <ul>
+    <li>逐镜头时间轴：每个镜头几秒、拍的是什么、字幕怎么上</li>
+    <li>标注制作方式：实拍、AI 生成还是代码模板，对应需要什么工具</li>
+    <li>给出复刻步骤：按顺序列出你要准备的素材和操作</li>
+    <li>不用装任何软件，发链接就行</li>
+  </ul>
+  <div class="box">
+    <p class="price">计划定价：单条 19 元，10 条套餐 149 元</p>
+    <p class="note">这是计划定价。「拆片报告」还在筹备，预约不收费；人数够了就开工，并优先通知预约的人。</p>
+    <p class="note" data-no-cta>预约通道准备中。</p>
+  </div>
+  <footer>适合：短视频运营、个人创作者、需要批量研究竞品视频的小团队</footer>
+</main>
+</body>
+</html>

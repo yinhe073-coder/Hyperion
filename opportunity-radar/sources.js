@@ -46,7 +46,8 @@ async function hnPainComments({ painPhrases, since }) {
       const text = strip(h.comment_text);
       // Algolia 会做模糊匹配，这里要求原句真的出现
       const idx = text.toLowerCase().indexOf(phrase.toLowerCase());
-      if (idx < 0) continue;
+      // 太短的一句话没有可判断的上下文
+      if (idx < 0 || text.length < 80) continue;
       // 只保留痛点句子附近的上下文
       const ctx = text.slice(Math.max(0, idx - 150), idx + 350);
       out.push({
@@ -133,7 +134,8 @@ async function v2ex({ v2exKeywords }) {
     .map((t) => ({
       id: `v2-${t.id}`,
       source: `V2EX/${t.node?.title || t.node?.name || ''}`,
-      kind: 'pain',
+      // 「分享创造」是别人在发布作品，属于走红信号
+      kind: t.node?.name === 'create' ? 'proof' : 'pain',
       title: t.title,
       text: clip(strip(t.content || '')),
       url: t.url,

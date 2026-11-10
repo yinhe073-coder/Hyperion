@@ -1,0 +1,126 @@
+{
+  "runId": "2026-11-10T18:27:07.500Z",
+  "evaluator": "claude-code-skill",
+  "items": [
+    {
+      "id": "gh-1444112593",
+      "verdict": "观察",
+      "score": 56,
+      "opportunity": "\"用代码生成整支视频\"的工具走红。独立开发者上线产品时都缺一支演示视频，可以做代做：对方给网址和卖点，你用这类工具产出 60 秒演示片。",
+      "who_pays": "准备在 Product Hunt、小红书、B 站发布产品的独立开发者；外包一支演示片通常几百到几千元。",
+      "mvp_48h": "用该工具给 2 个公开的独立产品各做一支演示片当样例，挂出按支收费的预约页。",
+      "first_step": "先自己跑通一支，看成片质量是否达到愿意发出去的水平。",
+      "risk": "成片质量不稳定时，返工时间会吃掉全部利润；与本期「拆片报告」同属视频方向，建议先等那个实验出结果。"
+    },
+    {
+      "id": "gh-1442385098",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "没有描述，无法判断。"
+    },
+    {
+      "id": "gh-1438724252",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "大模型推理代码，不是个人机会。"
+    },
+    {
+      "id": "ph-1310328",
+      "verdict": "观察",
+      "score": 35,
+      "opportunity": "可一键自托管的开源团队聊天工具。国内小团队有自部署需求，可观察是否有人愿意为代部署和汉化付费。",
+      "who_pays": "不想用国外 SaaS 的小团队；目前没有付费证据。",
+      "mvp_48h": "不适用，先观察。",
+      "first_step": "一周后看该项目的 Issue 里有没有中文用户的部署求助。",
+      "risk": "免费开源项目的周边服务，客单价低且需求零散。"
+    },
+    {
+      "id": "ph-1310895",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "免费替代品，变现不清楚。"
+    },
+    {
+      "id": "ph-1309941",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "Mac 原生应用，不匹配技能栈。"
+    },
+    {
+      "id": "ph-1311001",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "机器人物理引擎，不相关。"
+    },
+    {
+      "id": "ph-1310729",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "iPhone 系统集成，不匹配技能栈。"
+    },
+    {
+      "id": "ph-1310787",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "面向企业的测试平台，个人做不了。"
+    },
+    {
+      "id": "ph-1309577",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "虚拟社交空间，需求存疑。"
+    },
+    {
+      "id": "ph-1310190",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "建站工具，赛道拥挤。"
+    },
+    {
+      "id": "v2-1255983",
+      "verdict": "放弃",
+      "score": 10,
+      "opportunity": "无",
+      "who_pays": "无明确付钱方",
+      "mvp_48h": "不适用",
+      "first_step": "不适用",
+      "risk": "个人选购咨询，不是可产品化的需求。"
+    }
+  ]
+}

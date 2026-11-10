@@ -78,5 +78,18 @@
     "money": 20,
     "fit": 15,
     "fresh": 5
-  }
+  },
+  "maxKitsPerDay": 2,
+  "landing": {
+    "formAction": "",
+    "contactEmail": "",
+    "leadsSource": "data/leads.csv"
+  },
+  "validation": {
+    "hours": 48,
+    "minLeads": 5,
+    "minPaid": 1,
+    "draftExpireDays": 7
+  },
+  "perSourceCap": 8
 }
