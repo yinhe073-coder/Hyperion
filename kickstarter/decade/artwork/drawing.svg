@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1140" height="570" viewBox="0 0 190 95" font-family="DejaVu Sans, sans-serif" font-size="2.6"><rect width="190" height="95" fill="#fff"/>
+<circle cx="38" cy="40" r="26.5" fill="none" stroke="#000" stroke-width="0.25" stroke-dasharray=""/>
+<circle cx="38" cy="40" r="20.0" fill="none" stroke="#000" stroke-width="0.25" stroke-dasharray=""/>
+<circle cx="38" cy="40" r="4.5" fill="none" stroke="#000" stroke-width="0.25" stroke-dasharray=""/>
+<circle cx="38" cy="40" r="2.55" fill="none" stroke="#000" stroke-width="0.25" stroke-dasharray="0.8 0.6"/>
+<circle cx="38" cy="32.3" r="2.1" fill="none" stroke="#000" stroke-width="0.25"/>
+<path d="M8.5 40H67.5M38 10.5V69.5" stroke="#888" stroke-width="0.1" stroke-dasharray="3 1 0.5 1"/>
+<path d="M11.5 72.5H64.5M11.5 71.3v2.4M64.5 71.3v2.4" stroke="#06c" stroke-width="0.15" fill="none"/>
+<text x="38" y="71.7" text-anchor="middle" fill="#06c">Ø53  底盘</text>
+<path d="M18.0 78.5H58.0M18.0 77.3v2.4M58.0 77.3v2.4" stroke="#06c" stroke-width="0.15" fill="none"/>
+<text x="38" y="77.7" text-anchor="middle" fill="#06c">Ø40  转盘</text>
+<text x="42" y="29.299999999999997" fill="#06c">拨孔 Ø4.2，圆心距 7.7</text>
+<text x="38" y="6" text-anchor="middle" font-size="3.2">正视图 1:1 示意</text>
+<text x="112" y="6" text-anchor="middle" font-size="3.2">剖面（厚度方向放大 4 倍）</text>
+<rect x="85.5" y="40.0" width="53.0" height="6.0" fill="#cfcfcc" stroke="#000" stroke-width="0.2"/>
+<rect x="107.0" y="39.2" width="10.0" height="0.8" fill="#fff3b0" stroke="#000" stroke-width="0.2"/>
+<rect x="92.0" y="36.0" width="40.0" height="3.2" fill="#e3e3e0" stroke="#000" stroke-width="0.2"/>
+<rect x="109.5" y="36.0" width="5" height="10.0" fill="#999" stroke="#000" stroke-width="0.2"/>
+<rect x="107.5" y="32.0" width="9.0" height="4.0" fill="#999" stroke="#000" stroke-width="0.2"/>
+<rect x="107.5" y="46.0" width="9.0" height="4.0" fill="#999" stroke="#000" stroke-width="0.2"/>
+<path d="M116.5 34.0L143.5 21.1" stroke="#06c" stroke-width="0.12" fill="none"/>
+<text x="144.5" y="22.0" fill="#06c">对锁螺丝头 Ø9 × 1.0</text>
+<path d="M132.0 37.6L143.5 28.6" stroke="#06c" stroke-width="0.12" fill="none"/>
+<text x="144.5" y="29.5" fill="#06c">转盘 0.8</text>
+<path d="M117.0 39.6L143.5 36.1" stroke="#06c" stroke-width="0.12" fill="none"/>
+<text x="144.5" y="37.0" fill="#06c">PTFE 垫片 0.2</text>
+<path d="M138.5 43.0L143.5 43.6" stroke="#06c" stroke-width="0.12" fill="none"/>
+<text x="144.5" y="44.5" fill="#06c">底盘 1.5</text>
+<path d="M116.5 48.0L143.5 51.1" stroke="#06c" stroke-width="0.12" fill="none"/>
+<text x="144.5" y="52.0" fill="#06c">背面螺丝头（下垫波形垫圈）</text>
+<text x="78" y="66.0" font-size="2.5">材料：304 不锈钢（标准版）/ TC4 钛合金（钛版）</text>
+<text x="78" y="70.6" font-size="2.5">表面：喷砂（哑光），正反面光纤激光打标（黑色）</text>
+<text x="78" y="75.2" font-size="2.5">总厚约 4.5 mm；不锈钢版约 37 g，钛版约 21 g（计算值）</text>
+<text x="78" y="79.8" font-size="2.5">C/D 尺刻度圆周长 125.7 mm，相当于一把 4.9 英寸直尺</text>
+<text x="78" y="84.4" font-size="2.5">打标与外圆同心度 ≤ 0.05 mm；转动力矩 15–40 mN·m（打样时调定）</text>
+</svg>
