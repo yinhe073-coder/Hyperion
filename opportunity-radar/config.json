@@ -1,0 +1,95 @@
+{
+  "profile": {
+    "about": "独立开发者，会 JavaScript/Node、数据抓取与建模、做过游戏数值计算器；每周可投入约 10 小时，启动预算 < 500 元",
+    "fitKeywords": [
+      "javascript",
+      "node",
+      "api",
+      "scraper",
+      "crawler",
+      "爬虫",
+      "数据",
+      "data",
+      "calculator",
+      "计算器",
+      "game",
+      "游戏",
+      "automation",
+      "自动化",
+      "chrome extension",
+      "插件",
+      "小程序",
+      "bot",
+      "cli",
+      "spreadsheet",
+      "excel",
+      "表格"
+    ],
+    "avoidKeywords": [
+      "crypto",
+      "web3",
+      "nft",
+      "casino",
+      "博彩",
+      "币圈",
+      "hardware",
+      "硬件",
+      "biotech"
+    ]
+  },
+  "lookbackDays": 3,
+  "topN": 15,
+  "llmTopN": 30,
+  "painPhrases": [
+    "I wish there was",
+    "I would pay for",
+    "I'd pay for",
+    "is there a tool",
+    "why is there no",
+    "looking for a tool",
+    "does anyone know a tool",
+    "still do this manually",
+    "tired of manually"
+  ],
+  "v2exKeywords": [
+    "有没有",
+    "求推荐",
+    "求一个",
+    "求个",
+    "有什么好",
+    "怎么解决",
+    "付费",
+    "收费",
+    "太贵",
+    "替代",
+    "工具",
+    "痛点",
+    "吐槽",
+    "难用",
+    "手动",
+    "批量",
+    "副业",
+    "变现",
+    "独立开发"
+  ],
+  "weights": {
+    "engagement": 30,
+    "pain": 30,
+    "money": 20,
+    "fit": 15,
+    "fresh": 5
+  },
+  "maxKitsPerDay": 2,
+  "landing": {
+    "formAction": "",
+    "contactEmail": "",
+    "leadsSource": "data/leads.csv"
+  },
+  "validation": {
+    "hours": 48,
+    "minLeads": 5,
+    "minPaid": 1,
+    "draftExpireDays": 7
+  },
+  "perSourceCap": 8
+}

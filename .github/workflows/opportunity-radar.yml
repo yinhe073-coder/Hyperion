@@ -1,0 +1,105 @@
+name: 机会雷达
+
+# 三种触发方式：
+#   每天定时      → 统计实验 + 采集 + 评估 + 出日报 + 开 Issue
+#   手动运行      → 同上
+#   Issue 里回复 /approve <slug>（仅仓库所有者）→ 落地页上线
+on:
+  schedule:
+    - cron: '17 0 * * *' # 每天北京时间 08:17
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: opportunity-radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    if: >-
+      github.event_name != 'issue_comment' ||
+      (!github.event.issue.pull_request &&
+       github.event.comment.author_association == 'OWNER' &&
+       startsWith(github.event.comment.body, '/approve'))
+    runs-on: ubuntu-latest
+    outputs:
+      site_changed: ${{ steps.commit.outputs.site_changed }}
+    defaults:
+      run:
+        working-directory: opportunity-radar
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      LEADS_SOURCE: ${{ secrets.LEADS_SOURCE }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 批准实验
+        if: github.event_name == 'issue_comment'
+        env:
+          COMMENT: ${{ github.event.comment.body }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          # 评论内容只通过环境变量传入；slug 的合法性由 radar.js 校验
+          read -r -a words <<< "$(printf '%s' "$COMMENT" | head -n 1)"
+          if out=$(node radar.js approve -- "${words[@]:1}" 2>&1); then
+            gh issue comment "$ISSUE" --body "✅ $out"
+          else
+            gh issue comment "$ISSUE" --body "❌ $out"
+            exit 1
+          fi
+
+      - name: 安装 AI 评估依赖（仅在配置了密钥时）
+        if: github.event_name != 'issue_comment' && env.ANTHROPIC_API_KEY != ''
+        run: npm install --no-audit --no-fund --no-package-lock
+
+      - name: 统计实验、采集、评估、出日报
+        if: github.event_name != 'issue_comment'
+        run: node radar.js run
+
+      - name: 提交
+        id: commit
+        run: |
+          git config user.name "opportunity-radar"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A .
+          if git diff --cached --quiet; then exit 0; fi
+          if ! git diff --cached --quiet -- site; then echo "site_changed=true" >> "$GITHUB_OUTPUT"; fi
+          git commit -m "机会雷达 $(TZ=Asia/Shanghai date '+%F %H:%M')"
+          git push
+
+      - name: 用 Issue 推送日报（GitHub 会发邮件通知）
+        if: github.event_name != 'issue_comment'
+        continue-on-error: true
+        run: |
+          f=$(cat data/last-report.txt)
+          gh issue create --title "$(head -n 1 "$f" | sed 's/^# //')" --body-file "$f"
+
+  # 落地页有变化时发布到 GitHub Pages（需要先在 Settings → Pages 把 Source 设为 GitHub Actions）
+  deploy:
+    needs: radar
+    if: needs.radar.outputs.site_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: opportunity-radar/site
+      - id: deploy
+        uses: actions/deploy-pages@v4
