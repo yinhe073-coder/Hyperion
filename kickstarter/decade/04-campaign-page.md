@@ -9,8 +9,8 @@
 | Title（50 字符，上限 60） | `DECADE: A 5-Inch Slide Rule in a 2-Inch Metal Coin` |
 | Subtitle（125 字符，上限 135） | `A pocket-sized circular slide rule in steel or titanium. Multiply, divide and convert units with a twist. No battery, no app.` |
 | Category | Design → Product Design |
-| Location | `[发起主体所在地，例如 Hong Kong]` |
-| Funding goal | `$6,000` |
+| Location | `[你在澳大利亚的城市]`, Australia |
+| Funding goal | `A$6,000`（澳大利亚项目以澳元计价） |
 | Duration | 30 天，2027-03-09（周二）至 2027-04-08 |
 | Project image | 样品实拍，16:9，手持或放在木桌上，刻度清晰可读 |
 
@@ -126,27 +126,30 @@ Both share the same scales and the same construction.
 
 | 档位 | 价格 | 内容 | 限量 | 预计发货 |
 |---|---:|---|---|---|
-| Thank you | $1 | Our thanks and every project update. | — | — |
-| Early Bird · Stainless | $29 | One DECADE in stainless steel. | 300 | Jul 2027 |
-| DECADE · Stainless | $35 | One DECADE in stainless steel. | — | Jul 2027 |
-| Early Bird · Titanium | $49 | One DECADE in titanium. | 200 | Jul 2027 |
-| DECADE · Titanium | $59 | One DECADE in titanium. | — | Jul 2027 |
-| The Pair | $79 | One stainless and one titanium. | — | Jul 2027 |
-| Gift Set | $115 | Four DECADE in stainless steel. | — | Jul 2027 |
+| Thank you | A$2 | Our thanks and every project update. | — | — |
+| Early Bird · Stainless | A$42 | One DECADE in stainless steel. | 300 | Jul 2027 |
+| DECADE · Stainless | A$50 | One DECADE in stainless steel. | — | Jul 2027 |
+| Early Bird · Titanium | A$69 | One DECADE in titanium. | 200 | Jul 2027 |
+| DECADE · Titanium | A$85 | One DECADE in titanium. | — | Jul 2027 |
+| The Pair | A$115 | One stainless and one titanium. | — | Jul 2027 |
+| Gift Set | A$165 | Four DECADE in stainless steel. | — | Jul 2027 |
 
-**Add-on：** Leather sleeve, $9. Vegetable-tanned leather, fits either version.
+**Add-on：** Leather sleeve, A$13. Vegetable-tanned leather, fits either version.
 
 每个档位都写上：`Includes a printed quick-start card.`
 
-计划零售价（页面上可写 "Planned retail price"）：不锈钢 $45，钛 $75。
+计划零售价（页面上可写 "Planned retail price"）：不锈钢 A$65，钛 A$109。
+
+价格按 1 澳元 ≈ 0.70 美元折算，对应美元约 $29 / $35 / $48 / $59 / $80 / $115。上线前按当时汇率再核一次。
 
 ## Shipping（运费，页面上按地区设置）
 
 | 地区 | 运费 |
 |---|---:|
-| United States | $7 |
-| EU / United Kingdom | $8 |
-| Rest of world | $10 |
+| Australia | A$6 |
+| United States | A$10 |
+| EU / United Kingdom | A$12 |
+| Rest of world | A$15 |
 
 页面上加一段说明（运费和税的金额必须等物流报价后确认）：
 
@@ -192,7 +195,7 @@ They work identically. Steel is heavier and costs less. Titanium weighs about ha
 No. It's a precision instrument with small parts, intended for ages 14 and up.
 
 **Where is it made?**
-In China, by `[实际地区]` workshops that specialise in laser cutting and marking.
+Designed in Australia and made in China, by `[实际地区]` workshops that specialise in laser cutting and marking.
 
 **When will I get it?**
 We estimate July 2027. The timeline section shows each step.
@@ -219,8 +222,8 @@ Kickstarter 要求如实披露项目中使用 AI 的部分。建议这样填：
 
 | 金额 | 内容 |
 |---:|---|
-| $15,000 | 所有回报升级为小铁盒包装 |
-| $30,000 | 背面增加一圈英寸/厘米对照尺 |
-| $60,000 | 解锁带透明游标的进阶版（单独档位，延后发货） |
+| A$20,000 | 所有回报升级为小铁盒包装 |
+| A$40,000 | 背面增加一圈英寸/厘米对照尺 |
+| A$80,000 | 解锁带透明游标的进阶版（单独档位，延后发货） |
 
 延伸目标会增加成本和交期，每一条在公布前都要重新算一遍 `finance.py`。

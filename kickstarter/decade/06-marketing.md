@@ -6,7 +6,7 @@
 
 | 目标 | 数量 | 依据 |
 |---|---:|---|
-| 达成目标金额所需支持者 | 约 110 人 | `finance.py`，$6,000 目标 |
+| 达成目标金额所需支持者 | 约 78 人 | `finance.py`，A$6,000 目标 |
 | 上线前的邮件名单 | 800–1,000 人 | 经验上名单的 5%–10% 会在首周支持 |
 | Kickstarter 预热页关注者 | 500 人以上 | 关注者的转化率通常高于邮件 |
 
@@ -84,7 +84,7 @@
 >
 > You signed up to hear when DECADE goes live. It's next Tuesday, March 9, at `[时间与时区]`.
 >
-> The first 300 stainless and 200 titanium units are early-bird priced at $29 and $49. After that it's $35 and $59.
+> The first 300 stainless and 200 titanium units are early-bird priced at A$42 and A$69 (about US$29 and US$48). After that it's A$50 and A$85.
 >
 > I'll send one more email the moment it's live. `[预热页链接]`
 
@@ -104,7 +104,7 @@
 >
 > DECADE ends on Thursday. We're at `[金额]` from `[人数]` backers.
 >
-> After the campaign, the price goes to $45 for steel and $75 for titanium. `[链接]`
+> After the campaign, the price goes to A$65 for steel and A$109 for titanium. `[链接]`
 
 ## 广告文案（可选，预算有限时先不投）
 
